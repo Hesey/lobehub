@@ -1,0 +1,395 @@
+'use client';
+
+import { Flexbox } from '@lobehub/ui';
+import { Badge, Card } from 'antd';
+import { createStaticStyles } from 'antd-style';
+import {
+  Activity,
+  Award,
+  BarChart3,
+  CheckCircle2,
+  Database,
+  FlaskConical,
+  Gauge,
+  LoaderPinwheel,
+  Server,
+  Target,
+  TrendingUp,
+  Trophy,
+  Volleyball,
+  Zap,
+} from 'lucide-react';
+import { memo, useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useParams } from 'react-router-dom';
+
+import { parseAsStringEnum, useQueryState } from '@/hooks/useQueryParam';
+import { useEvalStore } from '@/store/eval';
+
+import DatasetImportModal from '../../features/DatasetImportModal';
+import BenchmarkHeader from './features/BenchmarkHeader';
+import DatasetsTab from './features/DatasetsTab';
+import RunsTab from './features/RunsTab';
+
+const SYSTEM_ICONS = [
+  LoaderPinwheel,
+  Volleyball,
+  Server,
+  Target,
+  Award,
+  Trophy,
+  Activity,
+  BarChart3,
+  TrendingUp,
+  Gauge,
+  Zap,
+];
+
+const getSystemIcon = (id: string) => {
+  const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return SYSTEM_ICONS[hash % SYSTEM_ICONS.length];
+};
+
+const styles = createStaticStyles(({ css, cssVar }) => ({
+  container: css`
+    overflow-y: auto;
+    padding-block: 24px;
+    padding-inline: 32px;
+  `,
+  statCard: css`
+    .ant-card-body {
+      padding: 16px;
+    }
+  `,
+  statIcon: css`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  `,
+  tabButton: css`
+    cursor: pointer;
+
+    position: relative;
+
+    display: flex;
+    gap: 8px;
+    align-items: center;
+
+    padding-block: 10px;
+    padding-inline: 16px;
+    border: none;
+    border-block-end: 2px solid transparent;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    background: transparent;
+
+    transition: all 0.2s;
+
+    &[data-active='true'] {
+      border-block-end-color: ${cssVar.colorPrimary};
+      color: ${cssVar.colorText};
+    }
+
+    &[data-active='false'] {
+      color: ${cssVar.colorTextTertiary};
+
+      &:hover {
+        color: ${cssVar.colorText};
+      }
+    }
+  `,
+  tabBadge: css`
+    padding-block: 2px;
+    padding-inline: 6px;
+    border-radius: 10px;
+    font-size: 10px;
+  `,
+  tabsContainer: css`
+    display: flex;
+    gap: 4px;
+    border-block-end: 1px solid ${cssVar.colorBorderSecondary};
+  `,
+}));
+
+const BenchmarkDetail = memo(() => {
+  const { t } = useTranslation('eval');
+  const { benchmarkId } = useParams<{ benchmarkId: string }>();
+  const [activeTab, setActiveTab] = useQueryState(
+    'tab',
+    parseAsStringEnum(['datasets', 'runs'] as const).withDefault('datasets'),
+  );
+  const [importOpen, setImportOpen] = useState(false);
+
+  const systemIcon = useMemo(
+    () => (benchmarkId ? getSystemIcon(benchmarkId) : Server),
+    [benchmarkId],
+  );
+
+  const useFetchBenchmarkDetail = useEvalStore((s) => s.useFetchBenchmarkDetail);
+  const benchmark = useEvalStore((s) =>
+    benchmarkId ? s.benchmarkDetailMap[benchmarkId] : undefined,
+  );
+  const useFetchDatasets = useEvalStore((s) => s.useFetchDatasets);
+  const datasets = useEvalStore((s) => s.datasetList);
+  const refreshDatasets = useEvalStore((s) => s.refreshDatasets);
+  const useFetchRuns = useEvalStore((s) => s.useFetchRuns);
+  const runList = useEvalStore((s) => s.runList);
+
+  useFetchBenchmarkDetail(benchmarkId);
+  useFetchDatasets(benchmarkId);
+
+  const handleRefreshDatasets = useCallback(async () => {
+    if (benchmarkId) {
+      await refreshDatasets(benchmarkId);
+    }
+  }, [benchmarkId, refreshDatasets]);
+
+  const handleBenchmarkUpdate = useCallback(async () => {
+    if (benchmarkId) {
+      await refreshDatasets(benchmarkId);
+    }
+  }, [benchmarkId, refreshDatasets]);
+
+  // Fetch all runs for this benchmark (pass undefined to get all)
+  useFetchRuns(undefined);
+
+  const completedRuns = runList.filter((r: any) => r.status === 'completed');
+  const bestScore =
+    completedRuns.length > 0
+      ? Math.max(...completedRuns.map((r: any) => r.metrics?.score || 0))
+      : null;
+
+  if (!benchmark) return null;
+
+  const totalCases = datasets.reduce((sum, ds) => sum + (ds.testCaseCount || 0), 0);
+
+  return (
+    <Flexbox className={styles.container} gap={24} height="100%" width="100%">
+      {/* Header */}
+      <BenchmarkHeader
+        benchmark={benchmark}
+        systemIcon={systemIcon}
+        onBenchmarkUpdate={handleBenchmarkUpdate}
+      />
+
+      {/* Summary Cards */}
+      <div
+        style={{
+          display: 'grid',
+          gap: 16,
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        }}
+      >
+        <Card className={styles.statCard}>
+          <Flexbox horizontal align="center" gap={12}>
+            <div className={styles.statIcon} style={{ background: 'var(--ant-color-primary-bg)' }}>
+              <Database size={16} style={{ color: 'var(--ant-color-primary)' }} />
+            </div>
+            <Flexbox gap={2}>
+              <p
+                style={{
+                  color: 'var(--ant-color-text-tertiary)',
+                  fontSize: 12,
+                  margin: 0,
+                }}
+              >
+                {t('benchmark.detail.stats.datasets')}
+              </p>
+              <p
+                style={{
+                  color: 'var(--ant-color-text)',
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                  margin: 0,
+                }}
+              >
+                {datasets.length}
+              </p>
+            </Flexbox>
+          </Flexbox>
+        </Card>
+
+        <Card className={styles.statCard}>
+          <Flexbox horizontal align="center" gap={12}>
+            <div className={styles.statIcon} style={{ background: 'var(--ant-color-primary-bg)' }}>
+              <FlaskConical size={16} style={{ color: 'var(--ant-color-primary)' }} />
+            </div>
+            <Flexbox gap={2}>
+              <p
+                style={{
+                  color: 'var(--ant-color-text-tertiary)',
+                  fontSize: 12,
+                  margin: 0,
+                }}
+              >
+                {t('benchmark.detail.stats.totalCases')}
+              </p>
+              <p
+                style={{
+                  color: 'var(--ant-color-text)',
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                  margin: 0,
+                }}
+              >
+                {totalCases}
+              </p>
+            </Flexbox>
+          </Flexbox>
+        </Card>
+
+        <Card className={styles.statCard}>
+          <Flexbox horizontal align="center" gap={12}>
+            <div className={styles.statIcon} style={{ background: 'var(--ant-color-primary-bg)' }}>
+              <Activity size={16} style={{ color: 'var(--ant-color-primary)' }} />
+            </div>
+            <Flexbox gap={2}>
+              <p
+                style={{
+                  color: 'var(--ant-color-text-tertiary)',
+                  fontSize: 12,
+                  margin: 0,
+                }}
+              >
+                {t('benchmark.detail.stats.runs')}
+              </p>
+              <p
+                style={{
+                  color: 'var(--ant-color-text)',
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                  margin: 0,
+                }}
+              >
+                {runList.length}
+              </p>
+            </Flexbox>
+          </Flexbox>
+        </Card>
+
+        <Card className={styles.statCard}>
+          <Flexbox horizontal align="center" gap={12}>
+            <div className={styles.statIcon} style={{ background: 'var(--ant-color-success-bg)' }}>
+              <CheckCircle2 size={16} style={{ color: 'var(--ant-color-success)' }} />
+            </div>
+            <Flexbox gap={2}>
+              <p
+                style={{
+                  color: 'var(--ant-color-text-tertiary)',
+                  fontSize: 12,
+                  margin: 0,
+                }}
+              >
+                {t('benchmark.detail.stats.bestScore')}
+              </p>
+              <p
+                style={{
+                  color: 'var(--ant-color-text)',
+                  fontSize: 20,
+                  fontWeight: 'bold',
+                  margin: 0,
+                }}
+              >
+                {bestScore !== null ? bestScore.toFixed(1) : '--'}
+              </p>
+            </Flexbox>
+          </Flexbox>
+        </Card>
+      </div>
+
+      {/* Tags */}
+      {benchmark.tags && benchmark.tags.length > 0 && (
+        <Flexbox horizontal gap={6} style={{ flexWrap: 'wrap' }}>
+          {benchmark.tags.map((tag: string) => (
+            <Badge
+              key={tag}
+              style={{
+                backgroundColor: 'transparent',
+                borderColor: 'var(--ant-color-border)',
+                color: 'var(--ant-color-text-tertiary)',
+                fontSize: 12,
+              }}
+            >
+              {tag}
+            </Badge>
+          ))}
+        </Flexbox>
+      )}
+
+      {/* Tabs */}
+      <div className={styles.tabsContainer}>
+        <button
+          className={styles.tabButton}
+          data-active={activeTab === 'datasets'}
+          onClick={() => setActiveTab('datasets')}
+        >
+          {t('benchmark.detail.tabs.datasets')}
+          <span
+            className={styles.tabBadge}
+            style={{
+              backgroundColor:
+                activeTab === 'datasets'
+                  ? 'var(--ant-color-primary-bg)'
+                  : 'var(--ant-color-fill-secondary)',
+              color:
+                activeTab === 'datasets'
+                  ? 'var(--ant-color-primary)'
+                  : 'var(--ant-color-text-tertiary)',
+            }}
+          >
+            {datasets.length}
+          </span>
+        </button>
+        <button
+          className={styles.tabButton}
+          data-active={activeTab === 'runs'}
+          onClick={() => setActiveTab('runs')}
+        >
+          {t('benchmark.detail.tabs.runs')}
+          <span
+            className={styles.tabBadge}
+            style={{
+              backgroundColor:
+                activeTab === 'runs'
+                  ? 'var(--ant-color-primary-bg)'
+                  : 'var(--ant-color-fill-secondary)',
+              color:
+                activeTab === 'runs'
+                  ? 'var(--ant-color-primary)'
+                  : 'var(--ant-color-text-tertiary)',
+            }}
+          >
+            {runList.length}
+          </span>
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'datasets' ? (
+        <DatasetsTab
+          benchmarkId={benchmarkId!}
+          datasets={datasets}
+          onImport={() => setImportOpen(true)}
+          onRefresh={handleRefreshDatasets}
+        />
+      ) : (
+        <RunsTab benchmarkId={benchmarkId!} />
+      )}
+
+      <DatasetImportModal
+        benchmarkId={benchmarkId!}
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onSuccess={handleRefreshDatasets}
+      />
+    </Flexbox>
+  );
+});
+
+export default BenchmarkDetail;
