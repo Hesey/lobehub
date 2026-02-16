@@ -21,10 +21,8 @@ interface StatsCardsProps {
 const StatsCards = memo<StatsCardsProps>(({ metrics }) => {
   const { t } = useTranslation('eval');
 
-  if (!metrics) return null;
-
-  const passedCount = metrics.passedCases ?? 0;
-  const completedCount = passedCount + (metrics.failedCases ?? 0);
+  const passedCount = metrics?.passedCases ?? 0;
+  const completedCount = passedCount + (metrics?.failedCases ?? 0);
 
   const cards = [
     {
@@ -33,22 +31,22 @@ const StatsCards = memo<StatsCardsProps>(({ metrics }) => {
       icon: CheckCircle2,
       label: t('run.metrics.passRate'),
       subtitle: completedCount > 0 ? `${passedCount} / ${completedCount}` : undefined,
-      value: metrics.passRate !== undefined ? `${Math.round(metrics.passRate * 100)}%` : '-',
+      value: metrics?.passRate !== undefined ? `${Math.round(metrics.passRate * 100)}%` : '-',
     },
     {
       bgColor: 'var(--ant-color-primary-bg)',
       color: 'var(--ant-color-primary)',
       icon: Activity,
       label: t('run.metrics.avgScore'),
-      value: metrics.averageScore !== undefined ? metrics.averageScore.toFixed(2) : '-',
+      value: metrics?.averageScore !== undefined ? metrics.averageScore.toFixed(2) : '-',
     },
     {
       bgColor: 'var(--ant-color-warning-bg)',
       color: 'var(--ant-color-warning)',
       icon: Clock,
       label: t('run.metrics.duration'),
-      subtitle: metrics.duration !== undefined ? `${metrics.duration}ms total` : undefined,
-      value: metrics.duration !== undefined ? `${(metrics.duration / 1000).toFixed(1)}s` : '-',
+      subtitle: metrics?.duration !== undefined ? `${metrics.duration}ms total` : undefined,
+      value: metrics?.duration !== undefined ? `${(metrics.duration / 1000).toFixed(1)}s` : '-',
     },
     {
       bgColor: 'var(--ant-color-primary-bg)',
@@ -56,10 +54,10 @@ const StatsCards = memo<StatsCardsProps>(({ metrics }) => {
       icon: DollarSign,
       label: t('run.metrics.cost'),
       subtitle:
-        metrics.cost !== undefined && completedCount > 0
+        metrics?.cost !== undefined && completedCount > 0
           ? `~$${(metrics.cost / completedCount).toFixed(4)}/case`
           : undefined,
-      value: metrics.cost !== undefined ? `$${metrics.cost.toFixed(2)}` : '-',
+      value: metrics?.cost !== undefined ? `$${metrics.cost.toFixed(2)}` : '-',
     },
   ];
 

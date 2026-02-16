@@ -21,7 +21,9 @@ export type RubricType =
   | 'answer-relevance'
   // Similarity
   | 'similar'
-  | 'levenshtein';
+  | 'levenshtein'
+  // Composite
+  | 'rubric';
 
 export interface RubricConfigValue {
   value: string;

@@ -43,8 +43,8 @@ type MappingTarget =
   | 'sortOrder';
 
 export interface FieldMappingValue {
-  choices?: string;
   category?: string;
+  choices?: string;
   expected?: string;
   expectedDelimiter?: string;
   input: string;
@@ -203,7 +203,7 @@ const MappingStep = memo<MappingStepProps>(
                     style: {
                       verticalAlign: 'top',
                       whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-word',
+                      wordBreak: 'break-word' as const,
                     },
                   })
                 : undefined,

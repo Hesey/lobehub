@@ -19,17 +19,17 @@ const toIdentifier = (name: string) =>
 
 interface DatasetCreateModalProps {
   benchmarkId: string;
-  open: boolean;
   onClose: () => void;
   onSuccess?: (dataset: { id: string; name: string; preset: string }) => void;
+  open: boolean;
 }
 
 const CATEGORY_LABELS: Record<string, string> = {
-  research: 'Deep Research / QA',
+  'research': 'Deep Research / QA',
   'tool-use': 'Tool Use',
-  memory: 'Memory',
-  reference: 'Reference Formats',
-  custom: 'Custom',
+  'memory': 'Memory',
+  'reference': 'Reference Formats',
+  'custom': 'Custom',
 };
 
 const DatasetCreateModal = memo<DatasetCreateModalProps>(
@@ -43,6 +43,7 @@ const DatasetCreateModal = memo<DatasetCreateModalProps>(
     const [identifierTouched, setIdentifierTouched] = useState(false);
 
     const nameValue = Form.useWatch('name', form);
+    const evalModeValue = Form.useWatch('evalMode', form);
 
     useEffect(() => {
       if (!identifierTouched && nameValue) {
@@ -67,6 +68,8 @@ const DatasetCreateModal = memo<DatasetCreateModalProps>(
           identifier: values.identifier.trim(),
           name: values.name,
           description: values.description,
+          evalConfig: values.evalConfig?.prompt ? values.evalConfig : undefined,
+          evalMode: values.evalMode || undefined,
           metadata: {
             preset: selectedPreset,
           },
@@ -108,11 +111,11 @@ const DatasetCreateModal = memo<DatasetCreateModalProps>(
         destroyOnHidden
         okButtonProps={{ loading }}
         okText={t('common.create')}
-        onCancel={handleClose}
-        onOk={handleCreate}
         open={open}
         title={t('dataset.create.title')}
         width={600}
+        onCancel={handleClose}
+        onOk={handleCreate}
       >
         <Form form={form} layout="vertical" style={{ paddingBlock: 16 }}>
           <Form.Item
@@ -129,19 +132,43 @@ const DatasetCreateModal = memo<DatasetCreateModalProps>(
             rules={[{ required: true, message: t('dataset.create.identifierRequired') }]}
           >
             <Input
-              onChange={() => setIdentifierTouched(true)}
               placeholder={t('dataset.create.identifier.placeholder')}
+              onChange={() => setIdentifierTouched(true)}
             />
           </Form.Item>
 
           <Form.Item label={t('dataset.create.description.label')} name="description">
-            <Input.TextArea
-              placeholder={t('dataset.create.description.placeholder')}
-              rows={3}
+            <Input.TextArea placeholder={t('dataset.create.description.placeholder')} rows={3} />
+          </Form.Item>
+
+          <Form.Item extra={t('dataset.evalMode.hint')} label={t('evalMode.label')} name="evalMode">
+            <Select
+              allowClear
+              placeholder={t('evalMode.placeholder')}
+              optionRender={(option) => (
+                <Flexbox gap={2} style={{ padding: '4px 0' }}>
+                  <div>{option.label}</div>
+                  <Text style={{ fontSize: 12 }} type="secondary">
+                    {t(`evalMode.${option.value}.desc` as any)}
+                  </Text>
+                </Flexbox>
+              )}
+              options={[
+                { label: t('evalMode.equals'), value: 'equals' },
+                { label: t('evalMode.contains'), value: 'contains' },
+                { label: t('evalMode.llm-rubric'), value: 'llm-rubric' },
+              ]}
             />
           </Form.Item>
 
+          {evalModeValue === 'llm-rubric' && (
+            <Form.Item label={t('evalMode.prompt.label')} name={['evalConfig', 'prompt']}>
+              <Input.TextArea placeholder={t('evalMode.prompt.placeholder')} rows={3} />
+            </Form.Item>
+          )}
+
           <Form.Item
+            label={t('dataset.create.preset.label')}
             extra={
               currentPreset ? (
                 <Flexbox gap={4} style={{ marginTop: 8 }}>
@@ -160,10 +187,11 @@ const DatasetCreateModal = memo<DatasetCreateModalProps>(
                 </Flexbox>
               ) : null
             }
-            label={t('dataset.create.preset.label')}
           >
             <Select
-              onChange={(value) => setSelectedPreset(value)}
+              options={selectOptions}
+              placeholder="Select a preset"
+              value={selectedPreset}
               optionRender={(option) => {
                 const preset = DATASET_PRESETS[option.value as string];
                 if (!preset) return option.label;
@@ -198,9 +226,7 @@ const DatasetCreateModal = memo<DatasetCreateModalProps>(
                   </Flexbox>
                 );
               }}
-              options={selectOptions}
-              placeholder="Select a preset"
-              value={selectedPreset}
+              onChange={(value) => setSelectedPreset(value)}
             />
           </Form.Item>
         </Form>

@@ -1,4 +1,4 @@
-import  { type AgentEvalBenchmark, type AgentEvalBenchmarkListItem } from '@lobechat/types';
+import { type AgentEvalBenchmark, type AgentEvalBenchmarkListItem } from '@lobechat/types';
 
 export interface BenchmarkSliceState {
   benchmarkDetailMap: Record<string, AgentEvalBenchmark>;
@@ -6,6 +6,7 @@ export interface BenchmarkSliceState {
   benchmarkListInit: boolean;
   isCreatingBenchmark: boolean;
   isDeletingBenchmark: boolean;
+  isLoadingBenchmarkList: boolean;
   isUpdatingBenchmark: boolean;
   loadingBenchmarkDetailIds: string[];
 }
@@ -16,6 +17,7 @@ export const benchmarkInitialState: BenchmarkSliceState = {
   benchmarkListInit: false,
   isCreatingBenchmark: false,
   isDeletingBenchmark: false,
+  isLoadingBenchmarkList: true,
   isUpdatingBenchmark: false,
   loadingBenchmarkDetailIds: [],
 };

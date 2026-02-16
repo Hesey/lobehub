@@ -17,15 +17,18 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
     }
   `,
   filterButton: css`
-    padding: 4px 10px;
+    cursor: pointer;
+
+    padding-block: 4px;
+    padding-inline: 10px;
+    border: none;
 
     font-size: 11px;
     font-weight: 500;
     text-transform: capitalize;
 
     background: transparent;
-    border: none;
-    cursor: pointer;
+
     transition: all 0.2s;
 
     &[data-active='true'] {
@@ -42,18 +45,19 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
     }
 
     &:not(:first-child) {
-      border-left: 1px solid ${cssVar.colorBorderSecondary};
+      border-inline-start: 1px solid ${cssVar.colorBorderSecondary};
     }
   `,
   filterContainer: css`
-    display: flex;
     overflow: hidden;
+    display: flex;
     border: 1px solid ${cssVar.colorBorderSecondary};
     border-radius: 6px;
   `,
   header: css`
-    padding: 12px 16px;
-    border-bottom: 1px solid ${cssVar.colorBorderSecondary};
+    padding-block: 12px;
+    padding-inline: 16px;
+    border-block-end: 1px solid ${cssVar.colorBorderSecondary};
   `,
   modalContent: css`
     .ant-modal-content {
@@ -95,18 +99,17 @@ const TestCasesTab = memo<TestCasesTabProps>(({ datasetId }) => {
   const [previewCase, setPreviewCase] = useState<any | null>(null);
 
   const useFetchTestCases = useEvalStore((s) => s.useFetchTestCases);
-  const data = useEvalStore((s) => s.testCaseList);
-  const total = useEvalStore((s) => s.testCaseTotal);
-  const loading = useEvalStore((s) => s.isLoadingTestCases);
 
-  useFetchTestCases({
+  const { data: testCaseData, isLoading: loading } = useFetchTestCases({
     datasetId,
     limit: pagination.pageSize,
     offset: (pagination.current - 1) * pagination.pageSize,
   });
 
+  const data = testCaseData?.data || [];
+
   // Client-side filtering
-  const filteredData = data.filter((c) => {
+  const filteredData = data.filter((c: any) => {
     if (diffFilter !== 'all' && c.metadata?.difficulty !== diffFilter) return false;
     if (search && !c.content?.input?.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
@@ -185,8 +188,7 @@ const TestCasesTab = memo<TestCasesTabProps>(({ datasetId }) => {
     {
       dataIndex: ['metadata', 'difficulty'],
       key: 'difficulty',
-      render: (difficulty: string) =>
-        difficulty ? getDifficultyBadge(difficulty) : '-',
+      render: (difficulty: string) => (difficulty ? getDifficultyBadge(difficulty) : '-'),
       title: t('table.columns.difficulty'),
       width: 96,
     },
@@ -195,7 +197,7 @@ const TestCasesTab = memo<TestCasesTabProps>(({ datasetId }) => {
       key: 'tags',
       render: (tags: string[]) =>
         tags?.length > 0 ? (
-          <Flexbox gap={4} horizontal>
+          <Flexbox horizontal gap={4}>
             {tags.slice(0, 1).map((tag) => (
               <Badge
                 key={tag}
@@ -221,15 +223,15 @@ const TestCasesTab = memo<TestCasesTabProps>(({ datasetId }) => {
       render: (_: any, record: any) => (
         <Button
           icon={Eye}
-          onClick={() => setPreviewCase(record)}
           size="small"
+          variant="text"
           style={{
             color: 'var(--ant-color-text-tertiary)',
             height: 28,
             padding: 0,
             width: 28,
           }}
-          variant="text"
+          onClick={() => setPreviewCase(record)}
         />
       ),
       width: 64,
@@ -240,7 +242,7 @@ const TestCasesTab = memo<TestCasesTabProps>(({ datasetId }) => {
     <>
       <Card className={styles.card}>
         <div className={styles.header}>
-          <Flexbox align="center" horizontal justify="space-between">
+          <Flexbox horizontal align="center" justify="space-between">
             <span
               style={{
                 color: 'var(--ant-color-text)',
@@ -250,7 +252,7 @@ const TestCasesTab = memo<TestCasesTabProps>(({ datasetId }) => {
             >
               {t('benchmark.detail.tabs.data')}
             </span>
-            <Flexbox align="center" gap={12} horizontal>
+            <Flexbox horizontal align="center" gap={12}>
               <div style={{ position: 'relative' }}>
                 <Search
                   size={14}
@@ -264,25 +266,25 @@ const TestCasesTab = memo<TestCasesTabProps>(({ datasetId }) => {
                 />
                 <Input
                   className={styles.searchInput}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    setPagination({ ...pagination, current: 1 });
-                  }}
                   placeholder={t('testCase.search.placeholder')}
                   size="small"
+                  value={search}
                   style={{
                     fontSize: 12,
                     paddingLeft: 32,
                   }}
-                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPagination({ ...pagination, current: 1 });
+                  }}
                 />
               </div>
               <div className={styles.filterContainer}>
                 {(['all', 'easy', 'medium', 'hard'] as const).map((f) => (
                   <button
-                    key={f}
                     className={styles.filterButton}
                     data-active={diffFilter === f}
+                    key={f}
                     onClick={() => {
                       setDiffFilter(f);
                       setPagination({ ...pagination, current: 1 });
@@ -301,6 +303,8 @@ const TestCasesTab = memo<TestCasesTabProps>(({ datasetId }) => {
             columns={columns}
             dataSource={filteredData}
             loading={loading}
+            rowKey="id"
+            size="middle"
             pagination={{
               current: pagination.current,
               onChange: (page, pageSize) => setPagination({ current: page, pageSize }),
@@ -308,8 +312,6 @@ const TestCasesTab = memo<TestCasesTabProps>(({ datasetId }) => {
               showSizeChanger: false,
               total: filteredData.length,
             }}
-            rowKey="id"
-            size="middle"
           />
         </div>
       </Card>
@@ -318,10 +320,10 @@ const TestCasesTab = memo<TestCasesTabProps>(({ datasetId }) => {
       <Modal
         className={styles.modalContent}
         footer={null}
-        onCancel={() => setPreviewCase(null)}
         open={!!previewCase}
         title={t('testCase.preview.title')}
         width={600}
+        onCancel={() => setPreviewCase(null)}
       >
         {previewCase && (
           <Flexbox gap={16}>
@@ -375,7 +377,7 @@ const TestCasesTab = memo<TestCasesTabProps>(({ datasetId }) => {
                 {previewCase.content?.expectedOutput || '-'}
               </div>
             </Flexbox>
-            <Flexbox align="center" gap={8} horizontal>
+            <Flexbox horizontal align="center" gap={8}>
               {previewCase.metadata?.difficulty &&
                 getDifficultyBadge(previewCase.metadata.difficulty)}
               {previewCase.metadata?.tags?.map((tag: string) => (

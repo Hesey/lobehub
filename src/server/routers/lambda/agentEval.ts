@@ -15,6 +15,28 @@ import { AgentEvalRunService } from '@/server/services/agentEvalRun';
 import { FileService } from '@/server/services/file';
 import { AgentEvalRunWorkflow } from '@/server/workflows/agentEvalRun';
 
+const rubricTypeSchema = z.enum([
+  'equals',
+  'contains',
+  'regex',
+  'starts-with',
+  'ends-with',
+  'any-of',
+  'numeric',
+  'extract-match',
+  'json-schema',
+  'javascript',
+  'python',
+  'llm-rubric',
+  'factuality',
+  'answer-relevance',
+  'similar',
+  'levenshtein',
+  'rubric',
+]);
+
+const evalConfigSchema = z.object({ prompt: z.string().optional() }).passthrough();
+
 const agentEvalProcedure = authedProcedure.use(serverDatabase).use(async (opts) => {
   const { ctx } = opts;
 
@@ -142,6 +164,8 @@ export const agentEvalRouter = router({
         identifier: z.string(),
         name: z.string(),
         description: z.string().optional(),
+        evalMode: rubricTypeSchema.optional(),
+        evalConfig: evalConfigSchema.optional(),
         metadata: z.record(z.unknown()).optional(),
       }),
     )
@@ -199,6 +223,8 @@ export const agentEvalRouter = router({
         id: z.string(),
         name: z.string().optional(),
         description: z.string().optional(),
+        evalMode: rubricTypeSchema.nullish(),
+        evalConfig: evalConfigSchema.nullish(),
         metadata: z.record(z.unknown()).optional(),
       }),
     )
@@ -387,6 +413,8 @@ export const agentEvalRouter = router({
           choices: z.array(z.string()).optional(),
           category: z.string().optional(),
         }),
+        evalMode: rubricTypeSchema.optional(),
+        evalConfig: evalConfigSchema.optional(),
         metadata: z.record(z.unknown()).optional(),
         sortOrder: z.number().optional(),
       }),
@@ -468,6 +496,8 @@ export const agentEvalRouter = router({
             category: z.string().optional(),
           })
           .optional(),
+        evalMode: rubricTypeSchema.nullish(),
+        evalConfig: evalConfigSchema.nullish(),
         metadata: z.record(z.unknown()).optional(),
         sortOrder: z.number().optional(),
       }),
@@ -589,11 +619,27 @@ export const agentEvalRouter = router({
         offset: input.offset,
       });
 
-      // Get total count
-      // Note: For now we return data length as total, in production should implement proper count
+      // Enrich runs with dataset name and agent info
+      const datasetIds = [...new Set(data.map((r) => r.datasetId))];
+      const agentIds = [...new Set(data.map((r) => r.targetAgentId).filter(Boolean))] as string[];
+
+      const [datasets, agents] = await Promise.all([
+        Promise.all(datasetIds.map((id) => ctx.datasetModel.findById(id))),
+        Promise.all(agentIds.map((id) => ctx.runService.getAgentDisplayInfo(id))),
+      ]);
+
+      const datasetMap = Object.fromEntries(datasets.filter(Boolean).map((d) => [d!.id, d!.name]));
+      const agentMap = Object.fromEntries(agents.filter(Boolean).map((a) => [a!.id, a!]));
+
+      const enriched = data.map((run) => ({
+        ...run,
+        datasetName: datasetMap[run.datasetId] || undefined,
+        targetAgent: run.targetAgentId ? agentMap[run.targetAgentId] : undefined,
+      }));
+
       const total = data.length;
 
-      return { data, total };
+      return { data: enriched, total };
     }),
 
   getRunDetails: agentEvalProcedure
@@ -828,5 +874,39 @@ export const agentEvalRouter = router({
 
       const result = await ctx.runModel.update(id, { metrics });
       return result;
+    }),
+
+  /**
+   * Update run (user-facing: name, datasetId, targetAgentId)
+   */
+  updateRun: agentEvalProcedure
+    .input(
+      z.object({
+        datasetId: z.string().optional(),
+        id: z.string(),
+        name: z.string().optional(),
+        targetAgentId: z.string().nullish(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { id, ...updates } = input;
+
+      const run = await ctx.runModel.findById(id);
+      if (!run) {
+        throw new TRPCError({ code: 'NOT_FOUND', message: 'Run not found' });
+      }
+
+      // Only allow changing dataset/agent when run hasn't started
+      const canChangeConfig = run.status === 'idle';
+      const value: Record<string, any> = {};
+
+      if (updates.name !== undefined) value.name = updates.name;
+      if (canChangeConfig && updates.datasetId !== undefined) value.datasetId = updates.datasetId;
+      if (canChangeConfig && updates.targetAgentId !== undefined)
+        value.targetAgentId = updates.targetAgentId;
+
+      if (Object.keys(value).length === 0) return run;
+
+      return ctx.runModel.update(id, value);
     }),
 });

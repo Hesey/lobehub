@@ -58,7 +58,7 @@ export class AgentEvalRunService {
       if (agentConfig) {
         targetAgent = {
           avatar: agentConfig.avatar,
-          id: agentConfig.id,
+          id: run.targetAgentId,
           model: agentConfig.model,
           provider: agentConfig.provider,
           title: agentConfig.title,
@@ -80,13 +80,25 @@ export class AgentEvalRunService {
     };
   }
 
+  async getAgentDisplayInfo(agentId: string) {
+    const agentConfig = await this.agentService.getAgentConfigById(agentId);
+    if (!agentConfig) return undefined;
+    return {
+      avatar: agentConfig.avatar,
+      id: agentId,
+      model: agentConfig.model,
+      provider: agentConfig.provider,
+      title: agentConfig.title,
+    };
+  }
+
   private async snapshotAgentConfig(agentId: string): Promise<EvalRunAgentSnapshot | undefined> {
     const agentConfig = await this.agentService.getAgentConfigById(agentId);
     if (!agentConfig) return undefined;
 
     return {
       avatar: agentConfig.avatar,
-      chatConfig: agentConfig.chatConfig as Record<string, unknown>,
+      chatConfig: agentConfig.chatConfig as unknown as Record<string, unknown>,
       description: null,
       fewShots: agentConfig.fewShots,
       model: agentConfig.model,

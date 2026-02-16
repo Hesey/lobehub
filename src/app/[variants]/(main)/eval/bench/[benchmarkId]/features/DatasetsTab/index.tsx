@@ -13,10 +13,9 @@ import DatasetCreateModal from '../../../../features/DatasetCreateModal';
 import DatasetEditModal from '../../../../features/DatasetEditModal';
 import DatasetImportModal from '../../../../features/DatasetImportModal';
 import TestCaseCreateModal from '../../../../features/TestCaseCreateModal';
-import RunCreateModal from '../RunCreateModal';
+import DatasetRunCreateModal from '../DatasetRunCreateModal';
 import DatasetCard from './DatasetCard';
 import EmptyState from './EmptyState';
-import TestCasePreviewPanel from './TestCasePreviewPanel';
 
 interface DatasetsTabProps {
   benchmarkId: string;
@@ -32,7 +31,6 @@ const DatasetsTab = memo<DatasetsTabProps>(({ benchmarkId, datasets, onImport, o
   const [pagination, setPagination] = useState({ current: 1, pageSize: 5 });
   const [search, setSearch] = useState('');
   const [diffFilter, setDiffFilter] = useState<'all' | 'easy' | 'medium' | 'hard'>('all');
-  const [previewCase, setPreviewCase] = useState<any | null>(null);
 
   // Create, Edit, and Import modals
   const [createOpen, setCreateOpen] = useState(false);
@@ -66,7 +64,7 @@ const DatasetsTab = memo<DatasetsTabProps>(({ benchmarkId, datasets, onImport, o
     [refreshTestCases, onRefresh],
   );
 
-  const filteredCases = testCases.filter((c) => {
+  const filteredCases = testCases.filter((c: any) => {
     if (diffFilter !== 'all' && c.metadata?.difficulty !== diffFilter) return false;
     if (search && !c.content?.input?.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
@@ -111,66 +109,53 @@ const DatasetsTab = memo<DatasetsTabProps>(({ benchmarkId, datasets, onImport, o
     [expandedDs, message, modal, onRefresh, refreshTestCases, t],
   );
 
-  const handleEditCase = useCallback((testCase: any) => {
-    setPreviewCase(testCase);
-  }, []);
-
   return (
     <>
-      <Flexbox horizontal style={{ flex: 1, minHeight: 0 }}>
-        {/* Left: Preview Panel */}
-        {previewCase && (
-          <TestCasePreviewPanel testCase={previewCase} onClose={() => setPreviewCase(null)} />
+      <Flexbox gap={16}>
+        {datasets.length > 0 && (
+          <Flexbox horizontal align="center" justify="space-between">
+            <p style={{ color: 'var(--ant-color-text-tertiary)', fontSize: 14, margin: 0 }}>
+              {t('benchmark.detail.datasetCount', { count: datasets.length })}
+            </p>
+            <Button icon={Plus} size="small" type="primary" onClick={() => setCreateOpen(true)}>
+              {t('dataset.actions.addDataset')}
+            </Button>
+          </Flexbox>
         )}
 
-        {/* Right: Dataset List */}
-        <Flexbox flex={1} gap={16} style={{ minWidth: 0, overflow: 'auto' }}>
-          {datasets.length > 0 && (
-            <Flexbox horizontal align="center" justify="space-between">
-              <p style={{ color: 'var(--ant-color-text-tertiary)', fontSize: 14, margin: 0 }}>
-                {t('benchmark.detail.datasetCount', { count: datasets.length })}
-              </p>
-              <Button icon={Plus} size="small" type="primary" onClick={() => setCreateOpen(true)}>
-                {t('dataset.actions.addDataset')}
-              </Button>
-            </Flexbox>
-          )}
-
-          {datasets.length === 0 ? (
-            <EmptyState onAddDataset={() => setCreateOpen(true)} />
-          ) : (
-            <Flexbox gap={12}>
-              {datasets.map((ds) => {
-                const isExpanded = expandedDs === ds.id;
-                return (
-                  <DatasetCard
-                    key={ds.id}
-                    dataset={ds}
-                    diffFilter={diffFilter}
-                    filteredCases={isExpanded ? filteredCases : []}
-                    isExpanded={isExpanded}
-                    loading={isExpanded ? loading : false}
-                    pagination={pagination}
-                    search={search}
-                    total={isExpanded ? total : 0}
-                    onAddCase={() => setAddCaseDatasetId(ds.id)}
-                    onDeleteCase={handleDeleteCase}
-                    onDiffFilterChange={handleDiffFilterChange}
-                    onEdit={setEditDataset}
-                    onEditCase={handleEditCase}
-                    onExpand={() => handleExpand(ds.id)}
-                    onImport={() => setImportDatasetId(ds.id)}
-                    onPageChange={(page, pageSize) => setPagination({ current: page, pageSize })}
-                    onPreview={setPreviewCase}
-                    onRefresh={onRefresh}
-                    onRun={() => setRunDatasetId(ds.id)}
-                    onSearchChange={handleSearchChange}
-                  />
-                );
-              })}
-            </Flexbox>
-          )}
-        </Flexbox>
+        {datasets.length === 0 ? (
+          <EmptyState onAddDataset={() => setCreateOpen(true)} />
+        ) : (
+          <Flexbox gap={12}>
+            {datasets.map((ds) => {
+              const isExpanded = expandedDs === ds.id;
+              return (
+                <DatasetCard
+                  benchmarkId={benchmarkId}
+                  dataset={ds}
+                  diffFilter={diffFilter}
+                  filteredCases={isExpanded ? filteredCases : []}
+                  isExpanded={isExpanded}
+                  key={ds.id}
+                  loading={isExpanded ? loading : false}
+                  pagination={pagination}
+                  search={search}
+                  total={isExpanded ? total : 0}
+                  onAddCase={() => setAddCaseDatasetId(ds.id)}
+                  onDeleteCase={handleDeleteCase}
+                  onDiffFilterChange={handleDiffFilterChange}
+                  onEdit={setEditDataset}
+                  onExpand={() => handleExpand(ds.id)}
+                  onImport={() => setImportDatasetId(ds.id)}
+                  onPageChange={(page, pageSize) => setPagination({ current: page, pageSize })}
+                  onRefresh={onRefresh}
+                  onRun={() => setRunDatasetId(ds.id)}
+                  onSearchChange={handleSearchChange}
+                />
+              );
+            })}
+          </Flexbox>
+        )}
       </Flexbox>
 
       {/* Edit Dataset Modal */}
@@ -222,9 +207,10 @@ const DatasetsTab = memo<DatasetsTabProps>(({ benchmarkId, datasets, onImport, o
       />
 
       {/* Create Run Modal */}
-      <RunCreateModal
+      <DatasetRunCreateModal
         benchmarkId={benchmarkId}
         datasetId={runDatasetId!}
+        datasetName={datasets.find((ds) => ds.id === runDatasetId)?.name || ''}
         open={!!runDatasetId}
         onClose={() => setRunDatasetId(null)}
       />

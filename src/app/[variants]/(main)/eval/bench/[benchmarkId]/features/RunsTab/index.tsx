@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useEvalStore } from '@/store/eval';
 
 import RunCreateModal from '../RunCreateModal';
+import RunEditModal from '../RunEditModal';
 import EmptyState from './EmptyState';
 import RunCard from './RunCard';
 
@@ -19,6 +20,7 @@ interface RunsTabProps {
 const RunsTab = memo<RunsTabProps>(({ benchmarkId }) => {
   const { t } = useTranslation('eval');
   const [createRunOpen, setCreateRunOpen] = useState(false);
+  const [editingRun, setEditingRun] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const useFetchRuns = useEvalStore((s) => s.useFetchRuns);
   const runList = useEvalStore((s) => s.runList);
@@ -82,7 +84,13 @@ const RunsTab = memo<RunsTabProps>(({ benchmarkId }) => {
         ) : (
           <Flexbox gap={12}>
             {filteredRuns.map((run: any) => (
-              <RunCard benchmarkId={benchmarkId} key={run.id} run={run} onRefresh={refreshRuns} />
+              <RunCard
+                benchmarkId={benchmarkId}
+                key={run.id}
+                run={run}
+                onEdit={setEditingRun}
+                onRefresh={refreshRuns}
+              />
             ))}
           </Flexbox>
         )}
@@ -93,6 +101,10 @@ const RunsTab = memo<RunsTabProps>(({ benchmarkId }) => {
         open={createRunOpen}
         onClose={() => setCreateRunOpen(false)}
       />
+
+      {editingRun && (
+        <RunEditModal open={!!editingRun} run={editingRun} onClose={() => setEditingRun(null)} />
+      )}
     </>
   );
 });

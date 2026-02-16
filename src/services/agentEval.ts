@@ -1,3 +1,5 @@
+import type { RubricType } from '@lobechat/types';
+
 import { lambdaClient } from '@/libs/trpc/client';
 
 class AgentEvalService {
@@ -48,6 +50,8 @@ class AgentEvalService {
   async createDataset(params: {
     benchmarkId: string;
     description?: string;
+    evalConfig?: { prompt?: string };
+    evalMode?: RubricType;
     identifier: string;
     metadata?: Record<string, unknown>;
     name: string;
@@ -57,6 +61,8 @@ class AgentEvalService {
 
   async updateDataset(params: {
     description?: string;
+    evalConfig?: { prompt?: string } | null;
+    evalMode?: RubricType | null;
     id: string;
     metadata?: Record<string, unknown>;
     name: string;
@@ -99,10 +105,12 @@ class AgentEvalService {
     content: {
       category?: string;
       choices?: string[];
-      expectedOutput?: string;
+      expected?: string;
       input: string;
     };
     datasetId: string;
+    evalConfig?: { prompt?: string };
+    evalMode?: RubricType;
     metadata?: {
       difficulty?: 'easy' | 'medium' | 'hard';
       tags?: string[];
@@ -118,6 +126,8 @@ class AgentEvalService {
       expected?: string;
       input: string;
     };
+    evalConfig?: { prompt?: string } | null;
+    evalMode?: RubricType | null;
     metadata?: Record<string, unknown>;
     sortOrder?: number;
   }) {
@@ -159,6 +169,15 @@ class AgentEvalService {
 
   async abortRun(id: string) {
     return lambdaClient.agentEval.abortRun.mutate({ id });
+  }
+
+  async updateRun(params: {
+    datasetId?: string;
+    id: string;
+    name?: string;
+    targetAgentId?: string | null;
+  }) {
+    return lambdaClient.agentEval.updateRun.mutate(params);
   }
 
   async deleteRun(id: string) {

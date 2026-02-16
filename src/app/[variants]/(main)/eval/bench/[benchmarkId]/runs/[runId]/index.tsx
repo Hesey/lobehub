@@ -1,7 +1,8 @@
 'use client';
 
-import { Flexbox } from '@lobehub/ui';
+import { Empty, Flexbox } from '@lobehub/ui';
 import { Card, Typography } from 'antd';
+import { BarChartBig } from 'lucide-react';
 import { memo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
@@ -45,6 +46,10 @@ const RunDetail = memo(() => {
   if (!runDetail) return null;
 
   const hasResults = !!runResults?.results?.length;
+  const isFinished =
+    runDetail.status === 'completed' ||
+    runDetail.status === 'failed' ||
+    runDetail.status === 'aborted';
   const hasMetrics =
     runDetail.metrics && (runDetail.metrics.passedCases > 0 || runDetail.metrics.failedCases > 0);
 
@@ -52,23 +57,32 @@ const RunDetail = memo(() => {
     <Flexbox gap={24} padding={24} style={{ margin: '0 auto', maxWidth: 1200, width: '100%' }}>
       <RunHeader benchmarkId={benchmarkId!} hideStart={!hasResults} run={runDetail} />
 
-      <StatsCards metrics={runDetail.metrics} />
+      {isFinished && (
+        <>
+          <StatsCards metrics={runDetail.metrics} />
 
-      {/* Charts */}
-      {hasMetrics && (
-        <Card
-          styles={{ body: { padding: 20 }, header: { minHeight: 'auto', padding: '12px 20px' } }}
-          title={
-            <Typography.Text strong style={{ fontSize: 14 }}>
-              {t('run.detail.charts')}
-            </Typography.Text>
-          }
-        >
-          <StatusDonut
-            failedCases={runDetail.metrics.failedCases}
-            passedCases={runDetail.metrics.passedCases}
-          />
-        </Card>
+          {/* Charts */}
+          <Card
+            styles={{
+              body: { padding: 20 },
+              header: { minHeight: 'auto', padding: '12px 20px' },
+            }}
+            title={
+              <Typography.Text strong style={{ fontSize: 14 }}>
+                {t('run.detail.charts')}
+              </Typography.Text>
+            }
+          >
+            {hasMetrics ? (
+              <StatusDonut
+                failedCases={runDetail.metrics.failedCases}
+                passedCases={runDetail.metrics.passedCases}
+              />
+            ) : (
+              <Empty description={t('run.detail.noChartData')} icon={BarChartBig} />
+            )}
+          </Card>
+        </>
       )}
 
       {/* Case Results */}

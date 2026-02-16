@@ -9,7 +9,7 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
   container: css`
     flex-shrink: 0;
     width: 360px;
-    border-inline-end: 1px solid ${cssVar.colorBorderSecondary};
+    border-inline-start: 1px solid ${cssVar.colorBorderSecondary};
   `,
   content: css`
     overflow-y: auto;
@@ -23,21 +23,25 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
     color: ${cssVar.colorTextTertiary};
   `,
   fieldValue: css`
-    padding: 10px 12px;
+    padding-block: 10px;
+    padding-inline: 12px;
     border-radius: 8px;
+
     font-size: 13px;
     line-height: 1.6;
     color: ${cssVar.colorText};
-    background: ${cssVar.colorFillQuaternary};
-    white-space: pre-wrap;
     word-break: break-word;
+    white-space: pre-wrap;
+
+    background: ${cssVar.colorFillQuaternary};
   `,
   header: css`
     display: flex;
     align-items: center;
     justify-content: space-between;
 
-    padding: 12px 16px;
+    padding-block: 12px;
+    padding-inline: 16px;
     border-block-end: 1px solid ${cssVar.colorBorderSecondary};
   `,
   title: css`
@@ -63,8 +67,8 @@ const TestCasePreviewPanel = memo<TestCasePreviewPanelProps>(({ testCase, onClos
         <Button
           icon={<X size={14} />}
           size="small"
-          type="text"
           style={{ color: cssVar.colorTextTertiary, height: 28, padding: 0, width: 28 }}
+          type="text"
           onClick={onClose}
         />
       </div>

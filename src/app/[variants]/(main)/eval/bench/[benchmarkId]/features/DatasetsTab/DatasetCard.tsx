@@ -1,9 +1,10 @@
 import { Button, Flexbox, Tag } from '@lobehub/ui';
 import { App, Card, Dropdown } from 'antd';
 import { createStaticStyles, cssVar } from 'antd-style';
-import { ChevronRight, Database, Ellipsis, Pencil, Play, Trash2 } from 'lucide-react';
-import { memo, useCallback, useState } from 'react';
+import { ArrowRight, ChevronRight, Database, Ellipsis, Pencil, Play, Trash2 } from 'lucide-react';
+import { memo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 
 import NeuralNetworkLoading from '@/components/NeuralNetworkLoading';
 import { agentEvalService } from '@/services/agentEval';
@@ -57,6 +58,7 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
 }));
 
 interface DatasetCardProps {
+  benchmarkId: string;
   dataset: any;
   diffFilter: 'all' | 'easy' | 'medium' | 'hard';
   filteredCases: any[];
@@ -66,11 +68,9 @@ interface DatasetCardProps {
   onDeleteCase: (testCase: any) => void;
   onDiffFilterChange: (filter: 'all' | 'easy' | 'medium' | 'hard') => void;
   onEdit: (dataset: any) => void;
-  onEditCase: (testCase: any) => void;
   onExpand: () => void;
   onImport: () => void;
   onPageChange: (page: number, pageSize: number) => void;
-  onPreview: (testCase: any) => void;
   onRefresh: () => void;
   onRun: () => void;
   onSearchChange: (value: string) => void;
@@ -81,6 +81,7 @@ interface DatasetCardProps {
 
 const DatasetCard = memo<DatasetCardProps>(
   ({
+    benchmarkId,
     dataset,
     isExpanded,
     loading,
@@ -91,13 +92,11 @@ const DatasetCard = memo<DatasetCardProps>(
     pagination,
     onExpand,
     onEdit,
-    onEditCase,
     onDeleteCase,
     onRefresh,
     onSearchChange,
     onDiffFilterChange,
     onPageChange,
-    onPreview,
     onAddCase,
     onImport,
     onRun,
@@ -235,21 +234,35 @@ const DatasetCard = memo<DatasetCardProps>(
               <TestCaseEmptyState onAddCase={onAddCase} onImport={onImport} />
             ) : (
               <TestCaseTable
+                readOnly
                 diffFilter={diffFilter}
                 pagination={pagination}
                 search={search}
                 testCases={filteredCases}
                 total={total}
-                onAddCase={onAddCase}
-                onDelete={onDeleteCase}
                 onDiffFilterChange={onDiffFilterChange}
-                onEdit={onEditCase}
-                onImport={onImport}
                 onPageChange={onPageChange}
-                onPreview={onPreview}
                 onSearchChange={onSearchChange}
               />
             )}
+            <Flexbox
+              horizontal
+              align="center"
+              justify="center"
+              style={{
+                borderBlockStart: '1px solid var(--ant-color-border-secondary)',
+                padding: 12,
+              }}
+            >
+              <Link
+                style={{ textDecoration: 'none' }}
+                to={`/eval/bench/${benchmarkId}/datasets/${dataset.id}`}
+              >
+                <Button icon={ArrowRight} iconPosition="end" size="small" variant="text">
+                  {t('dataset.detail.viewDetail')}
+                </Button>
+              </Link>
+            </Flexbox>
           </div>
         )}
       </Card>

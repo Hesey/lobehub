@@ -1,3 +1,5 @@
+import type { EvalConfig, EvalMode } from './agentEval';
+
 // ============================================
 // Dataset Entity Types
 // ============================================
@@ -10,6 +12,8 @@ export interface AgentEvalDataset {
   benchmarkId: string;
   createdAt: Date;
   description?: string | null;
+  evalConfig?: EvalConfig | null;
+  evalMode?: EvalMode | null;
   id: string;
   identifier: string;
   metadata?: Record<string, unknown> | null;
@@ -26,6 +30,8 @@ export interface AgentEvalDatasetListItem {
   benchmarkId: string;
   createdAt: Date;
   description?: string | null;
+  evalConfig?: EvalConfig | null;
+  evalMode?: EvalMode | null;
   id: string;
   identifier: string;
   name: string;

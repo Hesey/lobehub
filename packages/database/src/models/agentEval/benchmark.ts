@@ -1,13 +1,13 @@
 import { and, count, desc, eq, getTableColumns, sql } from 'drizzle-orm';
 
 import {
-  type NewAgentEvalBenchmark,
   agentEvalBenchmarks,
   agentEvalDatasets,
   agentEvalRuns,
   agentEvalTestCases,
+  type NewAgentEvalBenchmark,
 } from '../../schemas';
-import { LobeChatDatabase } from '../../type';
+import { type LobeChatDatabase } from '../../type';
 
 export class AgentEvalBenchmarkModel {
   private userId: string;
@@ -104,7 +104,7 @@ export class AgentEvalBenchmarkModel {
           rubrics: row.rubrics,
           referenceUrl: row.referenceUrl,
           metadata: row.metadata,
-          tags: row.tags,
+          tags: (row as any).tags,
           isSystem: row.isSystem,
           createdAt: row.createdAt,
           updatedAt: row.updatedAt,

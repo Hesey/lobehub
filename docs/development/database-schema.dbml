@@ -128,6 +128,8 @@ table agent_eval_datasets {
   user_id text
   name text [not null]
   description text
+  eval_mode text
+  eval_config jsonb
   metadata jsonb
   accessed_at "timestamp with time zone" [not null, default: `now()`]
   created_at "timestamp with time zone" [not null, default: `now()`]
@@ -181,6 +183,8 @@ table agent_eval_test_cases {
   id text [pk, not null]
   dataset_id text [not null]
   content jsonb [not null]
+  eval_mode text
+  eval_config jsonb
   metadata jsonb
   sort_order integer [default: 0]
   accessed_at "timestamp with time zone" [not null, default: `now()`]

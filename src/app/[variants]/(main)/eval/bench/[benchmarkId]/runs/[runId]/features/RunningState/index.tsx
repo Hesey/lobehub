@@ -93,6 +93,14 @@ const useStyles = createStyles(({ css, token }) => ({
     position: relative;
     width: 200px;
     height: 200px;
+
+    @keyframes orbit-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    animation: orbit-spin 20s linear infinite;
   `,
   spinner: css`
     @keyframes spin {

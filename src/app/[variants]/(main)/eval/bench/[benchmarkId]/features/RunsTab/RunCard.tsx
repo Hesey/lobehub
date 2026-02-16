@@ -8,6 +8,7 @@ import {
   Clock,
   DollarSign,
   Ellipsis,
+  Pencil,
   Play,
   Square,
   Trash2,
@@ -30,8 +31,7 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
     }
 
     &:hover {
-      border-color: ${cssVar.colorPrimaryBorder};
-      background: ${cssVar.colorFillQuaternary};
+      border-color: ${cssVar.colorBorder};
     }
   `,
   meta: css`
@@ -66,11 +66,12 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
 
 interface RunCardProps {
   benchmarkId: string;
+  onEdit?: (run: any) => void;
   onRefresh?: () => Promise<void>;
   run: any;
 }
 
-const RunCard = memo<RunCardProps>(({ benchmarkId, run, onRefresh }) => {
+const RunCard = memo<RunCardProps>(({ benchmarkId, run, onRefresh, onEdit }) => {
   const { t } = useTranslation('eval');
   const { modal, message } = App.useApp();
   const deleteRun = useEvalStore((s) => s.deleteRun);
@@ -138,6 +139,12 @@ const RunCard = memo<RunCardProps>(({ benchmarkId, run, onRefresh }) => {
     });
   };
 
+  const handleEdit = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    onEdit?.(run);
+  };
+
   const menuItems = [
     ...(canStart
       ? [
@@ -147,8 +154,15 @@ const RunCard = memo<RunCardProps>(({ benchmarkId, run, onRefresh }) => {
             label: t('run.actions.start'),
             onClick: ({ domEvent }: any) => handleStart(domEvent),
           },
+          { type: 'divider' as const },
         ]
       : []),
+    {
+      icon: <Pencil size={14} />,
+      key: 'edit',
+      label: t('run.actions.edit'),
+      onClick: ({ domEvent }: any) => handleEdit(domEvent),
+    },
     ...(isActive
       ? [
           {
@@ -181,13 +195,15 @@ const RunCard = memo<RunCardProps>(({ benchmarkId, run, onRefresh }) => {
               <StatusBadge status={run.status} />
             </Flexbox>
             <Flexbox horizontal align="center" className={styles.meta} gap={4}>
-              {run.model && <span style={{ fontFamily: 'monospace' }}>{run.model}</span>}
-              {run.model && run.agentName && <span className={styles.separator}>/</span>}
-              {run.agentName && <span>{run.agentName}</span>}
-              {run.temperature !== undefined && (
+              {run.datasetName && <span>{run.datasetName}</span>}
+              {run.datasetName && run.targetAgent?.title && (
+                <span className={styles.separator}>/</span>
+              )}
+              {run.targetAgent?.title && <span>{run.targetAgent.title}</span>}
+              {run.targetAgent?.model && (
                 <>
                   <span className={styles.separator}>/</span>
-                  <span>T={run.temperature}</span>
+                  <span style={{ fontFamily: 'monospace' }}>{run.targetAgent.model}</span>
                 </>
               )}
               {run.createdAt && (

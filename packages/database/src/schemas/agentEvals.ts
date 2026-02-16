@@ -1,6 +1,6 @@
-/* eslint-disable sort-keys-fix/sort-keys-fix */
 import type {
   EvalBenchmarkRubric,
+  EvalConfig,
   EvalRunConfig,
   EvalRunMetrics,
   EvalRunTopicResult,
@@ -79,6 +79,29 @@ export const agentEvalDatasets = pgTable(
     name: text('name').notNull(),
     description: text('description'),
 
+    evalMode: text('eval_mode', {
+      enum: [
+        'equals',
+        'contains',
+        'regex',
+        'starts-with',
+        'ends-with',
+        'any-of',
+        'numeric',
+        'extract-match',
+        'json-schema',
+        'javascript',
+        'python',
+        'llm-rubric',
+        'factuality',
+        'answer-relevance',
+        'similar',
+        'levenshtein',
+        'rubric',
+      ],
+    }),
+    evalConfig: jsonb('eval_config').$type<EvalConfig>(),
+
     metadata: jsonb('metadata').$type<Record<string, unknown>>(),
 
     ...timestamps,
@@ -108,6 +131,29 @@ export const agentEvalTestCases = pgTable(
       .notNull(),
 
     content: jsonb('content').$type<EvalTestCaseContent>().notNull(),
+
+    evalMode: text('eval_mode', {
+      enum: [
+        'equals',
+        'contains',
+        'regex',
+        'starts-with',
+        'ends-with',
+        'any-of',
+        'numeric',
+        'extract-match',
+        'json-schema',
+        'javascript',
+        'python',
+        'llm-rubric',
+        'factuality',
+        'answer-relevance',
+        'similar',
+        'levenshtein',
+        'rubric',
+      ],
+    }),
+    evalConfig: jsonb('eval_config').$type<EvalConfig>(),
 
     metadata: jsonb('metadata').$type<EvalTestCaseMetadata>(),
 

@@ -116,6 +116,7 @@ export const { POST } = serve<FinalizeRunPayload>(
         }
 
         const testCase = runTopic.testCase;
+        if (!testCase) continue;
 
         // Run evaluation
         const result = evaluate(lastAssistantMsg.content, testCase.content, rubrics, {
@@ -183,11 +184,7 @@ export const { POST } = serve<FinalizeRunPayload>(
     });
 
     console.info(
-      '[finalize-run] Run %s completed: score=%.2f pass=%d/%d',
-      runId,
-      metrics.averageScore,
-      metrics.passedCases,
-      metrics.totalCases,
+      `[finalize-run] Run ${runId} completed: score=${metrics.averageScore.toFixed(2)} pass=${metrics.passedCases}/${metrics.totalCases}`,
     );
 
     return {

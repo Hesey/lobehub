@@ -2,7 +2,8 @@
 
 import { DEFAULT_INBOX_AVATAR, INBOX_SESSION_ID, SESSION_CHAT_URL } from '@lobechat/const';
 import { ActionIcon, Avatar } from '@lobehub/ui';
-import { Button, Collapse, Form, Input, InputNumber, Modal, Select, Space } from 'antd';
+import { Button, Collapse, Form, Input, InputNumber, Modal, Select, Space, Typography } from 'antd';
+import { css, cx } from 'antd-style';
 import { SquareArrowOutUpRight } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -10,6 +11,12 @@ import { useNavigate } from 'react-router-dom';
 
 import { agentService } from '@/services/agent';
 import { useEvalStore } from '@/store/eval';
+
+const agentSelectCls = cx(css`
+  .ant-select-content-value {
+    line-height: 22px;
+  }
+`);
 
 interface AgentOption {
   avatar?: string | null;
@@ -123,7 +130,7 @@ const RunCreateModal = memo<RunCreateModalProps>(({ open, onClose, benchmarkId, 
       title={t('run.create.title')}
       footer={
         <Space>
-          <Button onClick={handleClose}>{t('common.later')}</Button>
+          <Button onClick={handleClose}>{t('common.cancel')}</Button>
           <Button loading={isCreatingRun} onClick={() => handleSubmit(false)}>
             {t('run.create.createOnly')}
           </Button>
@@ -136,33 +143,34 @@ const RunCreateModal = memo<RunCreateModalProps>(({ open, onClose, benchmarkId, 
     >
       <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
         <Form.Item
-          label={t('run.create.dataset')}
-          name="datasetId"
-          rules={[{ message: t('run.create.dataset.required'), required: true }]}
+          label={t('run.create.name')}
+          name="name"
+          rules={[{ message: t('run.create.name.required'), required: true }]}
+          extra={
+            <Typography.Link
+              style={{ fontSize: 12 }}
+              onClick={() => {
+                const now = new Date();
+                const ts = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                form.setFieldsValue({ name: ts });
+              }}
+            >
+              {t('run.create.name.useTimestamp')}
+            </Typography.Link>
+          }
         >
-          <Select
-            placeholder={t('run.create.dataset.placeholder')}
-            variant="filled"
-            options={datasetList.map((ds) => ({
-              label: (
-                <Space>
-                  <span>{ds.name}</span>
-                  {ds.testCaseCount !== undefined && (
-                    <span style={{ color: 'var(--ant-color-text-quaternary)', fontSize: 12 }}>
-                      {t('run.create.caseCount', { count: ds.testCaseCount })}
-                    </span>
-                  )}
-                </Space>
-              ),
-              value: ds.id,
-            }))}
-          />
+          <Input placeholder={t('run.create.name.placeholder')} variant="filled" />
         </Form.Item>
 
-        <Form.Item label={t('run.create.agent')} name="targetAgentId">
+        <Form.Item
+          label={t('run.create.agent')}
+          name="targetAgentId"
+          rules={[{ message: t('run.create.agent.required'), required: true }]}
+        >
           <Select
             allowClear
             showSearch
+            className={agentSelectCls}
             loading={loadingAgents}
             options={agentOptions}
             placeholder={t('run.create.agent.placeholder')}
@@ -190,8 +198,28 @@ const RunCreateModal = memo<RunCreateModalProps>(({ open, onClose, benchmarkId, 
           />
         </Form.Item>
 
-        <Form.Item label={t('run.create.name')} name="name">
-          <Input placeholder={t('run.create.name.placeholder')} variant="filled" />
+        <Form.Item
+          label={t('run.create.dataset')}
+          name="datasetId"
+          rules={[{ message: t('run.create.dataset.required'), required: true }]}
+        >
+          <Select
+            placeholder={t('run.create.dataset.placeholder')}
+            variant="filled"
+            options={datasetList.map((ds) => ({
+              label: (
+                <Space>
+                  <span>{ds.name}</span>
+                  {ds.testCaseCount !== undefined && (
+                    <span style={{ color: 'var(--ant-color-text-quaternary)', fontSize: 12 }}>
+                      {t('run.create.caseCount', { count: ds.testCaseCount })}
+                    </span>
+                  )}
+                </Space>
+              ),
+              value: ds.id,
+            }))}
+          />
         </Form.Item>
 
         <Collapse

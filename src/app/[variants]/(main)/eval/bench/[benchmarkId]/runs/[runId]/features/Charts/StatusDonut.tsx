@@ -19,7 +19,7 @@ const StatusDonut = memo<StatusDonutProps>(({ passedCases, failedCases }) => {
 
   return (
     <DonutChart
-      category="name"
+      category="value"
       colors={[theme.colorSuccess, theme.colorError]}
       data={data}
       index="name"

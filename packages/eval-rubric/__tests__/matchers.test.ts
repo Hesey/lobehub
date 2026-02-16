@@ -92,6 +92,37 @@ describe('match - numeric', () => {
   });
 });
 
+describe('match - json-schema', () => {
+  const schema = {
+    type: 'object',
+    properties: { name: { type: 'string' }, age: { type: 'number' } },
+    required: ['name'],
+  };
+
+  it('should pass when JSON matches schema', () => {
+    const r = rubric('json-schema', { schema });
+    const result = match('{"name":"Alice","age":30}', undefined, r);
+    expect(result.passed).toBe(true);
+    expect(result.score).toBe(1);
+  });
+
+  it('should fail when JSON does not match schema', () => {
+    const r = rubric('json-schema', { schema });
+    const result = match('{"age":"not a number"}', undefined, r);
+    expect(result.passed).toBe(false);
+    expect(result.score).toBe(0);
+    expect(result.reason).toBeDefined();
+  });
+
+  it('should fail when output is not valid JSON', () => {
+    const r = rubric('json-schema', { schema });
+    const result = match('not json at all', undefined, r);
+    expect(result.passed).toBe(false);
+    expect(result.score).toBe(0);
+    expect(result.reason).toBe('Output is not valid JSON');
+  });
+});
+
 describe('match - levenshtein', () => {
   it('should pass for similar strings', () => {
     const r = rubric('levenshtein', { threshold: 0.7 });

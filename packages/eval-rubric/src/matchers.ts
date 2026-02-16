@@ -1,4 +1,5 @@
 import type { EvalBenchmarkRubric } from '@lobechat/types';
+import Ajv from 'ajv';
 
 import { normalize } from './normalize';
 
@@ -86,6 +87,24 @@ export const match = (
       return { passed, reason: `similarity=${similarity.toFixed(3)}`, score: similarity };
     }
 
+    case 'json-schema': {
+      const cfg = config as { schema: Record<string, unknown> };
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(actual);
+      } catch {
+        return { passed: false, reason: 'Output is not valid JSON', score: 0 };
+      }
+      const ajv = new Ajv();
+      const validate = ajv.compile(cfg.schema);
+      const valid = validate(parsed);
+      return {
+        passed: valid,
+        reason: valid ? undefined : ajv.errorsText(validate.errors),
+        score: valid ? 1 : 0,
+      };
+    }
+
     default: {
       return {
         passed: false,
@@ -99,7 +118,9 @@ export const match = (
 function levenshteinDistance(a: string, b: string): number {
   const m = a.length;
   const n = b.length;
-  const dp: number[][] = Array.from({ length: m + 1 }, () => Array.from({ length: n + 1 }, () => 0));
+  const dp: number[][] = Array.from({ length: m + 1 }, () =>
+    Array.from({ length: n + 1 }, () => 0),
+  );
 
   for (let i = 0; i <= m; i++) dp[i][0] = i;
   for (let j = 0; j <= n; j++) dp[0][j] = j;

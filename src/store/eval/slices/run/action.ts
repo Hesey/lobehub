@@ -19,8 +19,14 @@ export interface RunAction {
   }) => Promise<any>;
   deleteRun: (id: string) => Promise<void>;
   refreshRunDetail: (id: string) => Promise<void>;
-  refreshRuns: () => Promise<void>;
+  refreshRuns: (datasetId?: string) => Promise<void>;
   startRun: (id: string, force?: boolean) => Promise<void>;
+  updateRun: (params: {
+    datasetId?: string;
+    id: string;
+    name?: string;
+    targetAgentId?: string | null;
+  }) => Promise<any>;
   useFetchRunDetail: (id: string) => SWRResponse;
   useFetchRunResults: (id: string) => SWRResponse;
   useFetchRuns: (datasetId?: string) => SWRResponse;
@@ -57,13 +63,20 @@ export const createRunSlice: StateCreator<
     await mutate([FETCH_RUN_DETAIL_KEY, id]);
   },
 
-  refreshRuns: async () => {
-    await mutate(FETCH_RUNS_KEY);
+  refreshRuns: async (datasetId) => {
+    await mutate([FETCH_RUNS_KEY, datasetId]);
   },
 
   startRun: async (id, force) => {
     await agentEvalService.startRun(id, force);
     await get().refreshRunDetail(id);
+  },
+
+  updateRun: async (params) => {
+    const result = await agentEvalService.updateRun(params);
+    await get().refreshRunDetail(params.id);
+    await get().refreshRuns();
+    return result;
   },
 
   useFetchRunDetail: (id) => {

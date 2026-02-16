@@ -48,7 +48,7 @@ const DatasetImportModal = memo<DatasetImportModalProps>(
     const [headers, setHeaders] = useState<string[]>([]);
     const [preview, setPreview] = useState<Record<string, any>[]>([]);
     const [totalCount, setTotalCount] = useState(0);
-    const [format, setFormat] = useState<string>();
+    const [format, setFormat] = useState<'csv' | 'json' | 'jsonl' | 'xlsx'>();
 
     // Mapping state
     const [mapping, setMapping] = useState<Record<string, MappingTarget>>({});
@@ -101,7 +101,7 @@ const DatasetImportModal = memo<DatasetImportModalProps>(
           setHeaders(result.headers);
           setPreview(result.preview);
           setTotalCount(result.totalCount);
-          setFormat(result.format);
+          setFormat(result.format as 'csv' | 'json' | 'jsonl' | 'xlsx');
 
           // 3. Auto-infer field mapping using preset
           const inferred = autoInferMapping(result.headers, preset);

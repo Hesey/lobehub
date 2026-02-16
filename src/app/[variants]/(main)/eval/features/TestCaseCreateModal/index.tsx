@@ -1,6 +1,6 @@
 'use client';
 
-import { Modal } from '@lobehub/ui';
+import { Accordion, AccordionItem, Flexbox, Modal, Text } from '@lobehub/ui';
 import { App, Form, Input, Select } from 'antd';
 import { memo, useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +20,7 @@ const TestCaseCreateModal = memo<TestCaseCreateModalProps>(
     const { message } = App.useApp();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
+    const evalModeValue = Form.useWatch('evalMode', form);
 
     const handleClose = useCallback(() => {
       form.resetFields();
@@ -39,10 +40,12 @@ const TestCaseCreateModal = memo<TestCaseCreateModalProps>(
 
         await agentEvalService.createTestCase({
           content: {
-            expectedOutput: values.expected || undefined,
+            expected: values.expected,
             input: values.input,
           },
           datasetId,
+          evalConfig: values.evalConfig?.prompt ? values.evalConfig : undefined,
+          evalMode: values.evalMode || undefined,
           metadata: {
             ...(values.difficulty ? { difficulty: values.difficulty } : {}),
             ...(tags ? { tags } : {}),
@@ -68,11 +71,11 @@ const TestCaseCreateModal = memo<TestCaseCreateModalProps>(
         destroyOnHidden
         okButtonProps={{ loading }}
         okText={t('common.create')}
-        onCancel={handleClose}
-        onOk={handleSubmit}
         open={open}
         title={t('testCase.create.title')}
         width={520}
+        onCancel={handleClose}
+        onOk={handleSubmit}
       >
         <Form form={form} layout="vertical" style={{ paddingTop: 16 }}>
           <Form.Item
@@ -85,26 +88,76 @@ const TestCaseCreateModal = memo<TestCaseCreateModalProps>(
               placeholder={t('testCase.create.input.placeholder')}
             />
           </Form.Item>
-          <Form.Item label={t('testCase.create.expected.label')} name="expected">
+          <Form.Item
+            label={t('testCase.create.expected.label')}
+            name="expected"
+            rules={[{ message: t('testCase.create.expected.required'), required: true }]}
+          >
             <Input.TextArea
               autoSize={{ maxRows: 6, minRows: 2 }}
               placeholder={t('testCase.create.expected.placeholder')}
             />
           </Form.Item>
-          <Form.Item label={t('testCase.create.difficulty.label')} name="difficulty">
+          <Form.Item label={t('evalMode.label')} name="evalMode">
             <Select
               allowClear
+              placeholder={t('evalMode.placeholder')}
+              optionRender={(option) => (
+                <Flexbox gap={2} style={{ padding: '4px 0' }}>
+                  <div>{option.label}</div>
+                  <Text style={{ fontSize: 12 }} type="secondary">
+                    {t(`evalMode.${option.value}.desc` as any)}
+                  </Text>
+                </Flexbox>
+              )}
               options={[
-                { label: t('difficulty.easy'), value: 'easy' },
-                { label: t('difficulty.medium'), value: 'medium' },
-                { label: t('difficulty.hard'), value: 'hard' },
+                { label: t('evalMode.equals'), value: 'equals' },
+                { label: t('evalMode.contains'), value: 'contains' },
+                { label: t('evalMode.llm-rubric'), value: 'llm-rubric' },
               ]}
-              placeholder={t('testCase.create.difficulty.label')}
             />
           </Form.Item>
-          <Form.Item label={t('testCase.create.tags.label')} name="tags">
-            <Input placeholder={t('testCase.create.tags.placeholder')} />
-          </Form.Item>
+          {evalModeValue === 'llm-rubric' && (
+            <Form.Item label={t('evalMode.prompt.label')} name={['evalConfig', 'prompt']}>
+              <Input.TextArea
+                autoSize={{ maxRows: 8, minRows: 3 }}
+                placeholder={t('evalMode.prompt.placeholder')}
+              />
+            </Form.Item>
+          )}
+          <Accordion>
+            <AccordionItem
+              itemKey="advanced"
+              paddingBlock={6}
+              paddingInline={4}
+              title={t('testCase.create.advanced')}
+            >
+              <Flexbox gap={16} style={{ paddingTop: 8 }}>
+                <Form.Item
+                  label={t('testCase.create.difficulty.label')}
+                  name="difficulty"
+                  style={{ marginBottom: 0 }}
+                >
+                  <Select
+                    allowClear
+                    placeholder={t('testCase.create.difficulty.label')}
+                    options={[
+                      { label: t('difficulty.easy'), value: 'easy' },
+                      { label: t('difficulty.medium'), value: 'medium' },
+                      { label: t('difficulty.hard'), value: 'hard' },
+                    ]}
+                  />
+                </Form.Item>
+                <Form.Item
+                  label={t('testCase.create.tags.label')}
+                  name="tags"
+                  style={{ marginBottom: 0 }}
+                >
+                  <Input placeholder={t('testCase.create.tags.placeholder')} />
+                </Form.Item>
+              </Flexbox>
+            </AccordionItem>
+          </Accordion>
         </Form>
       </Modal>
     );

@@ -3,11 +3,12 @@
 import { SESSION_CHAT_URL } from '@lobechat/const';
 import { ActionIcon, Avatar, Flexbox } from '@lobehub/ui';
 import { App, Button, Card, Popconfirm, Progress, Typography } from 'antd';
-import { ArrowLeft, ChevronDown, ChevronUp, Play, Square, Trash2 } from 'lucide-react';
+import { ArrowLeft, ChevronDown, ChevronUp, Pencil, Play, Square, Trash2 } from 'lucide-react';
 import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 
+import RunEditModal from '@/app/[variants]/(main)/eval/bench/[benchmarkId]/features/RunEditModal';
 import StatusBadge from '@/app/[variants]/(main)/eval/features/StatusBadge';
 import { useEvalStore } from '@/store/eval';
 
@@ -28,6 +29,7 @@ const RunHeader = memo<RunHeaderProps>(({ run, benchmarkId, hideStart }) => {
   const canStart = run.status === 'idle' || run.status === 'failed' || run.status === 'aborted';
   const [starting, setStarting] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   const snapshot = run.config?.agentSnapshot;
   const agentTitle = run.targetAgent?.title || t('run.detail.agent.unnamed');
@@ -184,6 +186,12 @@ const RunHeader = memo<RunHeaderProps>(({ run, benchmarkId, hideStart }) => {
                 {t('run.actions.start')}
               </Button>
             )}
+            <ActionIcon
+              icon={Pencil}
+              size="small"
+              title={t('run.actions.edit')}
+              onClick={() => setEditOpen(true)}
+            />
             {isActive && (
               <Popconfirm title={t('run.actions.abort.confirm')} onConfirm={handleAbort}>
                 <ActionIcon icon={Square} size="small" title={t('run.actions.abort')} />
@@ -275,6 +283,8 @@ const RunHeader = memo<RunHeaderProps>(({ run, benchmarkId, hideStart }) => {
           </div>
         )}
       </Card>
+
+      <RunEditModal open={editOpen} run={run} onClose={() => setEditOpen(false)} />
     </Flexbox>
   );
 });

@@ -2,8 +2,8 @@ import { Button, Flexbox, Input } from '@lobehub/ui';
 import { Dropdown, Pagination, Table } from 'antd';
 import { type ColumnsType } from 'antd/es/table';
 import { createStaticStyles, cssVar } from 'antd-style';
-import { Ellipsis, Eye, FileUp, Pencil, Plus, Search, Trash2 } from 'lucide-react';
-import { memo } from 'react';
+import { Ellipsis, FileUp, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 const styles = createStaticStyles(({ css, cssVar }) => ({
@@ -67,8 +67,16 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
     }
 
     .ant-table-tbody > tr {
+      &.row-clickable {
+        cursor: pointer;
+      }
+
       &:hover {
         background: ${cssVar.colorFillQuaternary};
+      }
+
+      &.row-selected {
+        background: ${cssVar.colorPrimaryBg};
       }
     }
   `,
@@ -76,16 +84,18 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
 
 interface TestCaseTableProps {
   diffFilter: 'all' | 'easy' | 'medium' | 'hard';
-  onAddCase: () => void;
-  onDelete: (testCase: any) => void;
+  onAddCase?: () => void;
+  onDelete?: (testCase: any) => void;
   onDiffFilterChange: (filter: 'all' | 'easy' | 'medium' | 'hard') => void;
-  onEdit: (testCase: any) => void;
-  onImport: () => void;
+  onEdit?: (testCase: any) => void;
+  onImport?: () => void;
   onPageChange: (page: number, pageSize: number) => void;
-  onPreview: (testCase: any) => void;
+  onPreview?: (testCase: any) => void;
   onSearchChange: (value: string) => void;
   pagination: { current: number; pageSize: number };
+  readOnly?: boolean;
   search: string;
+  selectedId?: string;
   testCases: any[];
   total: number;
 }
@@ -105,114 +115,130 @@ const TestCaseTable = memo<TestCaseTableProps>(
     onDelete,
     onAddCase,
     onImport,
+    selectedId,
+    readOnly,
   }) => {
     const { t } = useTranslation('eval');
 
-    const columns: ColumnsType<any> = [
-      {
-        dataIndex: 'id',
-        key: 'index',
-        render: (_: any, __: any, index: number) => (
-          <span
-            style={{
-              color: 'var(--ant-color-text-tertiary)',
-              fontFamily: 'monospace',
-              fontSize: 12,
-            }}
-          >
-            {(pagination.current - 1) * pagination.pageSize + index + 1}
-          </span>
-        ),
-        title: '#',
-        width: 48,
-      },
-      {
-        dataIndex: ['content', 'input'],
-        ellipsis: true,
-        key: 'input',
-        render: (text: string) => (
-          <p
-            style={{
-              color: 'var(--ant-color-text)',
-              margin: 0,
-              maxWidth: 400,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {text}
-          </p>
-        ),
-        title: t('table.columns.input'),
-      },
-      {
-        dataIndex: ['content', 'expected'],
-        ellipsis: true,
-        key: 'expected',
-        render: (text: string) => (
-          <span style={{ color: 'var(--ant-color-text-secondary)' }}>{text || '-'}</span>
-        ),
-        title: t('table.columns.expected'),
-        width: 200,
-      },
-      {
-        dataIndex: ['content', 'category'],
-        key: 'category',
-        render: (text: string) => (
-          <span style={{ color: 'var(--ant-color-text-tertiary)', fontSize: 12 }}>
-            {text || '-'}
-          </span>
-        ),
-        title: t('table.columns.category'),
-        width: 120,
-      },
-      {
-        key: 'actions',
-        render: (_: any, record: any) => (
-          <Dropdown
-            trigger={['click']}
-            menu={{
-              items: [
-                {
-                  icon: <Eye size={14} />,
-                  key: 'preview',
-                  label: t('testCase.preview.title'),
-                  onClick: () => onPreview(record),
-                },
-                {
-                  icon: <Pencil size={14} />,
-                  key: 'edit',
-                  label: t('common.edit'),
-                  onClick: () => onEdit(record),
-                },
-                { type: 'divider' },
-                {
-                  danger: true,
-                  icon: <Trash2 size={14} />,
-                  key: 'delete',
-                  label: t('common.delete'),
-                  onClick: () => onDelete(record),
-                },
-              ],
-            }}
-          >
-            <Button
-              icon={Ellipsis}
-              size="small"
-              variant="text"
+    const columns: ColumnsType<any> = useMemo(() => {
+      const base: ColumnsType<any> = [
+        {
+          dataIndex: 'id',
+          key: 'index',
+          render: (_: any, __: any, index: number) => (
+            <span
               style={{
-                color: cssVar.colorTextTertiary,
-                height: 28,
-                padding: 0,
-                width: 28,
+                color: 'var(--ant-color-text-tertiary)',
+                fontFamily: 'monospace',
+                fontSize: 12,
               }}
-            />
-          </Dropdown>
-        ),
-        width: 48,
-      },
-    ];
+            >
+              {(pagination.current - 1) * pagination.pageSize + index + 1}
+            </span>
+          ),
+          title: '#',
+          width: 48,
+        },
+        {
+          dataIndex: ['content', 'input'],
+          key: 'input',
+          render: (text: string) => (
+            <p
+              style={{
+                color: 'var(--ant-color-text)',
+                margin: 0,
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+              }}
+            >
+              {text}
+            </p>
+          ),
+          title: t('table.columns.input'),
+        },
+        {
+          dataIndex: ['content', 'expected'],
+          ellipsis: true,
+          key: 'expected',
+          render: (text: string) => (
+            <span style={{ color: 'var(--ant-color-text-secondary)' }}>{text || '-'}</span>
+          ),
+          title: t('table.columns.expected'),
+          width: 200,
+        },
+        {
+          dataIndex: 'evalMode',
+          key: 'evalMode',
+          render: (text: string) => {
+            if (!text) return <span style={{ color: cssVar.colorTextQuaternary }}>-</span>;
+            return (
+              <span style={{ color: cssVar.colorTextSecondary, fontSize: 12 }}>
+                {t(`evalMode.${text}` as any)}
+              </span>
+            );
+          },
+          title: t('table.columns.evalMode'),
+          width: 120,
+        },
+        {
+          dataIndex: ['content', 'category'],
+          key: 'category',
+          render: (text: string) => (
+            <span style={{ color: 'var(--ant-color-text-tertiary)', fontSize: 12 }}>
+              {text || '-'}
+            </span>
+          ),
+          title: t('table.columns.category'),
+          width: 120,
+        },
+      ];
+
+      if (!readOnly) {
+        base.push({
+          key: 'actions',
+          render: (_: any, record: any) => (
+            <div onClick={(e) => e.stopPropagation()}>
+              <Dropdown
+                trigger={['click']}
+                menu={{
+                  items: [
+                    {
+                      icon: <Pencil size={14} />,
+                      key: 'edit',
+                      label: t('common.edit'),
+                      onClick: () => onEdit?.(record),
+                    },
+                    { type: 'divider' },
+                    {
+                      danger: true,
+                      icon: <Trash2 size={14} />,
+                      key: 'delete',
+                      label: t('common.delete'),
+                      onClick: () => onDelete?.(record),
+                    },
+                  ],
+                }}
+              >
+                <Button
+                  icon={Ellipsis}
+                  size="small"
+                  variant="text"
+                  style={{
+                    color: cssVar.colorTextTertiary,
+                    height: 28,
+                    padding: 0,
+                    width: 28,
+                  }}
+                />
+              </Dropdown>
+            </div>
+          ),
+          width: 48,
+        });
+      }
+
+      return base;
+    }, [pagination, readOnly, onEdit, onDelete, t]);
 
     return (
       <>
@@ -258,14 +284,16 @@ const TestCaseTable = memo<TestCaseTableProps>(
               ))}
             </div>
           </Flexbox>
-          <Flexbox horizontal gap={8}>
-            <Button icon={Plus} size="small" onClick={onAddCase}>
-              {t('testCase.actions.add')}
-            </Button>
-            <Button icon={FileUp} size="small" type="primary" onClick={onImport}>
-              {t('testCase.actions.import')}
-            </Button>
-          </Flexbox>
+          {!readOnly && (
+            <Flexbox horizontal gap={8}>
+              <Button icon={FileUp} size="small" onClick={onImport}>
+                {t('testCase.actions.import')}
+              </Button>
+              <Button icon={Plus} size="small" type="primary" onClick={onAddCase}>
+                {t('testCase.actions.add')}
+              </Button>
+            </Flexbox>
+          )}
         </div>
         <div className={styles.table}>
           <Table
@@ -274,6 +302,19 @@ const TestCaseTable = memo<TestCaseTableProps>(
             pagination={false}
             rowKey="id"
             size="small"
+            rowClassName={(record) => {
+              const classes: string[] = [];
+              if (!readOnly) classes.push('row-clickable');
+              if (record.id === selectedId) classes.push('row-selected');
+              return classes.join(' ');
+            }}
+            onRow={
+              readOnly
+                ? undefined
+                : (record) => ({
+                    onClick: () => onPreview?.(record),
+                  })
+            }
           />
         </div>
         {total > pagination.pageSize && (
@@ -284,9 +325,9 @@ const TestCaseTable = memo<TestCaseTableProps>(
             style={{ paddingBlock: 12, paddingInline: 16 }}
           >
             <Pagination
+              simple
               current={pagination.current}
               pageSize={pagination.pageSize}
-              simple
               size="small"
               total={total}
               onChange={onPageChange}

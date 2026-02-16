@@ -3,6 +3,13 @@
  * Defines test cases, run configurations, and metadata for agent evaluation
  */
 
+export type { RubricType as EvalMode } from './rubric';
+
+export interface EvalConfig {
+  [key: string]: unknown;
+  prompt?: string;
+}
+
 /**
  * Test case content structure
  */
@@ -75,8 +82,8 @@ export interface EvalRunMetrics {
   averageScore: number;
   duration?: number;
   failedCases: number;
-  passRate: number;
   passedCases: number;
+  passRate: number;
   rubricScores?: Record<string, number>;
   totalCases: number;
 }

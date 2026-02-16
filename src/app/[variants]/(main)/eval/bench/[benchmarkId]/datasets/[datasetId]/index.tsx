@@ -2,7 +2,7 @@
 
 import { Button, Flexbox } from '@lobehub/ui';
 import { App, Typography } from 'antd';
-import { ArrowLeft, Database, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, Database, Pencil, Plus, Trash2 } from 'lucide-react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -13,8 +13,11 @@ import { useEvalStore } from '@/store/eval';
 import DatasetEditModal from '../../../../features/DatasetEditModal';
 import DatasetImportModal from '../../../../features/DatasetImportModal';
 import TestCaseCreateModal from '../../../../features/TestCaseCreateModal';
+import TestCaseEditModal from '../../../../features/TestCaseEditModal';
+import DatasetRunCreateModal from '../../features/DatasetRunCreateModal';
 import TestCasePreviewPanel from '../../features/DatasetsTab/TestCasePreviewPanel';
 import TestCaseTable from '../../features/DatasetsTab/TestCaseTable';
+import EmptyState from '../../features/RunsTab/EmptyState';
 import RunCard from '../../features/RunsTab/RunCard';
 
 const DatasetDetail = memo(() => {
@@ -28,8 +31,10 @@ const DatasetDetail = memo(() => {
   const [diffFilter, setDiffFilter] = useState<'all' | 'easy' | 'medium' | 'hard'>('all');
   const [previewCase, setPreviewCase] = useState<any | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [editingCase, setEditingCase] = useState<any | null>(null);
   const [importOpen, setImportOpen] = useState(false);
   const [addCaseOpen, setAddCaseOpen] = useState(false);
+  const [createRunOpen, setCreateRunOpen] = useState(false);
 
   const useFetchDatasetDetail = useEvalStore((s) => s.useFetchDatasetDetail);
   const useFetchTestCases = useEvalStore((s) => s.useFetchTestCases);
@@ -115,10 +120,6 @@ const DatasetDetail = memo(() => {
   return (
     <>
       <Flexbox horizontal style={{ flex: 1, minHeight: 0 }}>
-        {previewCase && (
-          <TestCasePreviewPanel testCase={previewCase} onClose={() => setPreviewCase(null)} />
-        )}
-
         <Flexbox
           flex={1}
           gap={24}
@@ -210,11 +211,12 @@ const DatasetDetail = memo(() => {
                 diffFilter={diffFilter}
                 pagination={pagination}
                 search={search}
+                selectedId={previewCase?.id}
                 testCases={filteredCases}
                 total={total}
                 onAddCase={() => setAddCaseOpen(true)}
                 onDelete={handleDeleteCase}
-                onEdit={setPreviewCase}
+                onEdit={setEditingCase}
                 onImport={() => setImportOpen(true)}
                 onPageChange={(page, pageSize) => setPagination({ current: page, pageSize })}
                 onPreview={setPreviewCase}
@@ -231,19 +233,30 @@ const DatasetDetail = memo(() => {
           </Flexbox>
 
           {/* Related Runs */}
-          {sortedRuns.length > 0 && (
-            <Flexbox gap={12}>
+          <Flexbox gap={12}>
+            <Flexbox horizontal align="center" justify="space-between">
               <Typography.Text strong>
                 {t('dataset.detail.relatedRuns', { count: sortedRuns.length })}
               </Typography.Text>
+              <Button icon={Plus} size="small" onClick={() => setCreateRunOpen(true)}>
+                {t('dataset.detail.addRun')}
+              </Button>
+            </Flexbox>
+            {sortedRuns.length > 0 ? (
               <Flexbox gap={12}>
                 {sortedRuns.map((run: any) => (
                   <RunCard benchmarkId={benchmarkId!} key={run.id} run={run} />
                 ))}
               </Flexbox>
-            </Flexbox>
-          )}
+            ) : (
+              <EmptyState onCreate={() => setCreateRunOpen(true)} />
+            )}
+          </Flexbox>
         </Flexbox>
+
+        {previewCase && (
+          <TestCasePreviewPanel testCase={previewCase} onClose={() => setPreviewCase(null)} />
+        )}
       </Flexbox>
 
       {editOpen && (
@@ -267,6 +280,23 @@ const DatasetDetail = memo(() => {
         open={addCaseOpen}
         onClose={() => setAddCaseOpen(false)}
         onSuccess={handleRefresh}
+      />
+
+      {editingCase && (
+        <TestCaseEditModal
+          open={!!editingCase}
+          testCase={editingCase}
+          onClose={() => setEditingCase(null)}
+          onSuccess={handleRefresh}
+        />
+      )}
+
+      <DatasetRunCreateModal
+        benchmarkId={benchmarkId!}
+        datasetId={datasetId!}
+        datasetName={dataset.name}
+        open={createRunOpen}
+        onClose={() => setCreateRunOpen(false)}
       />
     </>
   );

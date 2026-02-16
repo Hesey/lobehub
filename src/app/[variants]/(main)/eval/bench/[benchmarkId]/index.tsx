@@ -26,7 +26,6 @@ import { useParams } from 'react-router-dom';
 import { parseAsStringEnum, useQueryState } from '@/hooks/useQueryParam';
 import { useEvalStore } from '@/store/eval';
 
-import DatasetImportModal from '../../features/DatasetImportModal';
 import BenchmarkHeader from './features/BenchmarkHeader';
 import DatasetsTab from './features/DatasetsTab';
 import RunsTab from './features/RunsTab';
@@ -304,9 +303,9 @@ const BenchmarkDetail = memo(() => {
       </div>
 
       {/* Tags */}
-      {benchmark.tags && benchmark.tags.length > 0 && (
+      {(benchmark as any).tags && (benchmark as any).tags.length > 0 && (
         <Flexbox horizontal gap={6} style={{ flexWrap: 'wrap' }}>
-          {benchmark.tags.map((tag: string) => (
+          {(benchmark as any).tags.map((tag: string) => (
             <Badge
               key={tag}
               style={{
@@ -382,12 +381,7 @@ const BenchmarkDetail = memo(() => {
         <RunsTab benchmarkId={benchmarkId!} />
       )}
 
-      <DatasetImportModal
-        benchmarkId={benchmarkId!}
-        open={importOpen}
-        onClose={() => setImportOpen(false)}
-        onSuccess={handleRefreshDatasets}
-      />
+      {/* DatasetImportModal is handled inside DatasetsTab */}
     </Flexbox>
   );
 });
