@@ -1,6 +1,7 @@
 import { evaluate } from '@lobechat/eval-rubric';
 import type { EvalRunMetrics, EvalRunTopicResult } from '@lobechat/types';
 import { serve } from '@upstash/workflow/nextjs';
+import debug from 'debug';
 
 import {
   AgentEvalBenchmarkModel,
@@ -11,6 +12,8 @@ import {
 import { MessageModel } from '@/database/models/message';
 import { getServerDB } from '@/database/server';
 import { type FinalizeRunPayload } from '@/server/workflows/agentEvalRun';
+
+const log = debug('lobe-cloud:workflows:finalize-run');
 
 /**
  * Finalize run workflow - evaluates agent outputs and updates run metrics
@@ -26,19 +29,19 @@ import { type FinalizeRunPayload } from '@/server/workflows/agentEvalRun';
  */
 export const { POST } = serve<FinalizeRunPayload>(
   async (context) => {
-    const { runId } = context.requestPayload ?? {};
+    const { runId, userId } = context.requestPayload ?? {};
 
-    console.log('[agent-eval-run:finalize-run] Starting:', { runId });
+    log('Starting: runId=%s', runId);
 
-    if (!runId) {
-      return { error: 'Missing runId', success: false };
+    if (!runId || !userId) {
+      return { error: 'Missing runId or userId', success: false };
     }
 
     const db = await getServerDB();
 
     // Step 1: Get run details
     const run = await context.run('agent-eval-run:get-run', async () => {
-      const runModel = new AgentEvalRunModel(db, '');
+      const runModel = new AgentEvalRunModel(db, userId);
       return runModel.findById(runId);
     });
 
@@ -48,18 +51,18 @@ export const { POST } = serve<FinalizeRunPayload>(
 
     // Step 2: Get benchmark rubrics via dataset → benchmark chain
     const benchmark = await context.run('agent-eval-run:get-benchmark', async () => {
-      const datasetModel = new AgentEvalDatasetModel(db, run.userId);
+      const datasetModel = new AgentEvalDatasetModel(db, userId);
       const dataset = await datasetModel.findById(run.datasetId);
       if (!dataset) return null;
 
-      const benchmarkModel = new AgentEvalBenchmarkModel(db, run.userId);
+      const benchmarkModel = new AgentEvalBenchmarkModel(db, userId);
       return benchmarkModel.findById(dataset.benchmarkId);
     });
 
     if (!benchmark) {
       // No benchmark found — mark run as failed
       await context.run('agent-eval-run:mark-failed', async () => {
-        const runModel = new AgentEvalRunModel(db, '');
+        const runModel = new AgentEvalRunModel(db, userId);
         return runModel.update(runId, { status: 'failed' });
       });
       return { error: 'Benchmark not found for dataset', success: false };
@@ -68,24 +71,25 @@ export const { POST } = serve<FinalizeRunPayload>(
     const rubrics = benchmark.rubrics;
     const passThreshold = (run.config?.passThreshold as number) ?? 0.6;
 
-    console.log('[agent-eval-run:finalize-run] Using benchmark:', {
-      benchmarkId: benchmark.id,
+    log(
+      'Using benchmark: id=%s rubrics=%d passThreshold=%d',
+      benchmark.id,
+      rubrics.length,
       passThreshold,
-      rubricCount: rubrics.length,
-    });
+    );
 
     // Step 3: Get all RunTopics
     const runTopics = await context.run('agent-eval-run:get-run-topics', async () => {
-      const runTopicModel = new AgentEvalRunTopicModel(db, '');
+      const runTopicModel = new AgentEvalRunTopicModel(db, userId);
       return runTopicModel.findByRunId(runId);
     });
 
-    console.log('[agent-eval-run:finalize-run] Total RunTopics:', runTopics.length);
+    log('Total RunTopics: %d', runTopics.length);
 
     // Step 4: Evaluate each RunTopic
     const metrics = await context.run('agent-eval-run:evaluate-and-score', async () => {
-      const messageModel = new MessageModel(db, '');
-      const runTopicModel = new AgentEvalRunTopicModel(db, '');
+      const messageModel = new MessageModel(db, userId);
+      const runTopicModel = new AgentEvalRunTopicModel(db, userId);
 
       let passedCases = 0;
       let failedCases = 0;
@@ -97,10 +101,8 @@ export const { POST } = serve<FinalizeRunPayload>(
         const messages = await messageModel.query({ topicId: runTopic.topicId });
 
         // Find the last assistant message
-        const assistantMessages = messages.filter(
-          (m: { role: string }) => m.role === 'assistant',
-        );
-        const lastAssistantMsg = assistantMessages[assistantMessages.length - 1];
+        const assistantMessages = messages.filter((m: { role: string }) => m.role === 'assistant');
+        const lastAssistantMsg = assistantMessages.at(-1);
 
         if (!lastAssistantMsg || !lastAssistantMsg.content) {
           // No assistant output — mark as failed
@@ -169,18 +171,24 @@ export const { POST } = serve<FinalizeRunPayload>(
       } satisfies EvalRunMetrics;
     });
 
-    console.log('[agent-eval-run:finalize-run] Metrics:', metrics);
+    log('Metrics: %O', metrics);
 
     // Step 5: Update run status
     await context.run('agent-eval-run:update-run', async () => {
-      const runModel = new AgentEvalRunModel(db, '');
+      const runModel = new AgentEvalRunModel(db, userId);
       return runModel.update(runId, {
         metrics,
         status: 'completed',
       });
     });
 
-    console.log('[agent-eval-run:finalize-run] Run completed:', { runId });
+    console.info(
+      '[finalize-run] Run %s completed: score=%.2f pass=%d/%d',
+      runId,
+      metrics.averageScore,
+      metrics.passedCases,
+      metrics.totalCases,
+    );
 
     return {
       metrics,

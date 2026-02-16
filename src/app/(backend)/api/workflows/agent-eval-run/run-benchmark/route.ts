@@ -1,8 +1,11 @@
 import { serve } from '@upstash/workflow/nextjs';
+import debug from 'debug';
 
 import { AgentEvalRunModel, AgentEvalTestCaseModel } from '@/database/models/agentEval';
 import { getServerDB } from '@/database/server';
 import { AgentEvalRunWorkflow, type RunBenchmarkPayload } from '@/server/workflows/agentEvalRun';
+
+const log = debug('lobe-cloud:workflows:run-benchmark');
 
 /**
  * Run benchmark workflow - entry point for agent eval run execution
@@ -15,16 +18,16 @@ import { AgentEvalRunWorkflow, type RunBenchmarkPayload } from '@/server/workflo
  */
 export const { POST } = serve<RunBenchmarkPayload>(
   async (context) => {
-    const { runId, dryRun, force } = context.requestPayload ?? {};
+    const { runId, dryRun, force, userId } = context.requestPayload ?? {};
 
-    console.log('[agent-eval-run:process-run] Starting with payload:', { dryRun, force, runId });
+    log('Starting: runId=%s dryRun=%s force=%s', runId, dryRun, force);
 
-    if (!runId) {
-      return { error: 'Missing runId in payload', success: false };
+    if (!runId || !userId) {
+      return { error: 'Missing runId or userId in payload', success: false };
     }
 
     const db = await getServerDB();
-    const runModel = new AgentEvalRunModel(db, ''); // userId validation done in tRPC layer
+    const runModel = new AgentEvalRunModel(db, userId);
 
     // Get run info
     const run = await context.run('agent-eval-run:get-run', () => runModel.findById(runId));
@@ -39,14 +42,14 @@ export const { POST } = serve<RunBenchmarkPayload>(
     }
 
     // Get all test cases
-    const testCaseModel = new AgentEvalTestCaseModel(db, run.userId);
+    const testCaseModel = new AgentEvalTestCaseModel(db, userId);
     const allTestCases = await context.run('agent-eval-run:get-test-cases', () =>
       testCaseModel.findByDatasetId(run.datasetId),
     );
 
     const allTestCaseIds = allTestCases.map((tc: { id: string }) => tc.id);
 
-    console.log('[agent-eval-run:process-run] Total test cases:', allTestCaseIds.length);
+    log('Total test cases: %d', allTestCaseIds.length);
 
     if (allTestCaseIds.length === 0) {
       return {
@@ -58,7 +61,11 @@ export const { POST } = serve<RunBenchmarkPayload>(
 
     // Filter test cases that need execution
     const testCaseIds = await context.run('agent-eval-run:filter-existing', () =>
-      AgentEvalRunWorkflow.filterTestCasesNeedingExecution(db, runId, allTestCaseIds),
+      AgentEvalRunWorkflow.filterTestCasesNeedingExecution(db, {
+        runId,
+        testCaseIds: allTestCaseIds,
+        userId,
+      }),
     );
 
     const result = {
@@ -69,11 +76,11 @@ export const { POST } = serve<RunBenchmarkPayload>(
       totalTestCases: allTestCaseIds.length,
     };
 
-    console.log('[agent-eval-run:process-run] Check result:', result);
+    log('Check result: %O', result);
 
     // If dryRun mode, return statistics only
     if (dryRun) {
-      console.log('[agent-eval-run:process-run] Dry run mode, returning statistics only');
+      console.info('[run-benchmark] Dry run: %d test cases would execute', testCaseIds.length);
       return {
         ...result,
         dryRun: true,
@@ -83,7 +90,7 @@ export const { POST } = serve<RunBenchmarkPayload>(
 
     // If no test cases need execution, return early
     if (testCaseIds.length === 0) {
-      console.log('[agent-eval-run:process-run] All test cases already executed');
+      console.info('[run-benchmark] All test cases already executed for run %s', runId);
       return {
         ...result,
         message: 'All test cases already executed',
@@ -105,9 +112,9 @@ export const { POST } = serve<RunBenchmarkPayload>(
     );
 
     // Trigger paginate-test-cases workflow
-    console.log('[agent-eval-run:process-run] Triggering paginate-test-cases workflow');
+    log('Triggering paginate-test-cases for run %s', runId);
     await context.run('agent-eval-run:trigger-paginate', () =>
-      AgentEvalRunWorkflow.triggerPaginateTestCases({ runId }),
+      AgentEvalRunWorkflow.triggerPaginateTestCases({ runId, userId }),
     );
 
     return {

@@ -59,6 +59,14 @@ function formatErrorForMetadata(error: unknown): Record<string, any> | undefined
  * This extends the public ExecAgentParams with server-side only options
  */
 interface InternalExecAgentParams extends ExecAgentParams {
+  /**
+   * Completion webhook configuration
+   * Persisted in Redis state, triggered via HTTP POST when the operation completes.
+   */
+  completionWebhook?: {
+    body?: Record<string, unknown>;
+    url: string;
+  };
   /** Cron job ID that triggered this execution (if trigger is 'cron') */
   cronJobId?: string;
   /** Step lifecycle callbacks for operation tracking (server-side only) */
@@ -132,6 +140,7 @@ export class AiAgentService {
       trigger,
       cronJobId,
       userInterventionConfig,
+      completionWebhook,
     } = params;
 
     // Validate that either agentId or slug is provided
@@ -404,6 +413,7 @@ export class AiAgentService {
           topicId,
         },
         autoStart,
+        completionWebhook,
         initialContext,
         initialMessages: processedMessages,
         modelRuntimeConfig: { model, provider },

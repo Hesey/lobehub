@@ -1,7 +1,6 @@
 'use client';
 
-import { Tag } from '@lobehub/ui';
-import { Flexbox } from '@lobehub/ui';
+import { Flexbox, Tag } from '@lobehub/ui';
 import { Input, Select, Table, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { memo, useMemo, useState } from 'react';
@@ -37,12 +36,24 @@ const CaseResultsTable = memo<CaseResultsTableProps>(({ results, benchmarkId, ru
 
   const columns: ColumnsType<any> = [
     {
+      key: 'index',
+      render: (_: any, __: any, index: number) => (
+        <span
+          style={{ color: 'var(--ant-color-text-tertiary)', fontFamily: 'monospace', fontSize: 12 }}
+        >
+          {index + 1}
+        </span>
+      ),
+      title: '#',
+      width: 48,
+    },
+    {
       dataIndex: ['testCase', 'content', 'input'],
       ellipsis: true,
       key: 'input',
       render: (text: string, record: any) => (
         <Link
-          style={{ color: 'inherit' }}
+          style={{ color: 'inherit', textDecoration: 'none' }}
           to={`/eval/bench/${benchmarkId}/runs/${runId}/cases/${record.testCaseId}`}
         >
           <Typography.Text ellipsis style={{ maxWidth: 400 }}>
@@ -71,7 +82,23 @@ const CaseResultsTable = memo<CaseResultsTableProps>(({ results, benchmarkId, ru
       key: 'score',
       render: (_: any, record: any) => {
         const score = record.topic?.metadata?.totalScore;
-        return score !== undefined ? score.toFixed(2) : '-';
+        if (score === undefined) return '-';
+        return (
+          <span
+            style={{
+              color:
+                score >= 80
+                  ? 'var(--ant-color-success)'
+                  : score >= 60
+                    ? 'var(--ant-color-warning)'
+                    : 'var(--ant-color-error)',
+              fontFamily: 'monospace',
+              fontWeight: 600,
+            }}
+          >
+            {score.toFixed(2)}
+          </span>
+        );
       },
       title: t('table.columns.score'),
       width: 100,
@@ -80,7 +107,19 @@ const CaseResultsTable = memo<CaseResultsTableProps>(({ results, benchmarkId, ru
       key: 'duration',
       render: (_: any, record: any) => {
         const duration = record.topic?.metadata?.duration;
-        return duration !== undefined ? `${(duration / 1000).toFixed(1)}s` : '-';
+        return duration !== undefined ? (
+          <span
+            style={{
+              color: 'var(--ant-color-text-tertiary)',
+              fontFamily: 'monospace',
+              fontSize: 12,
+            }}
+          >
+            {(duration / 1000).toFixed(1)}s
+          </span>
+        ) : (
+          '-'
+        );
       },
       title: t('table.columns.duration'),
       width: 100,
@@ -96,26 +135,40 @@ const CaseResultsTable = memo<CaseResultsTableProps>(({ results, benchmarkId, ru
   ];
 
   return (
-    <Flexbox gap={12}>
-      <Flexbox gap={8} horizontal>
+    <Flexbox gap={0}>
+      {/* Filters */}
+      <Flexbox
+        horizontal
+        gap={8}
+        style={{
+          borderBlockEnd: '1px solid var(--ant-color-border-secondary)',
+          padding: '12px 20px',
+        }}
+      >
         <Input.Search
           allowClear
-          onChange={(e) => setSearchText(e.target.value)}
           placeholder={t('table.search.placeholder')}
           style={{ width: 240 }}
+          onChange={(e) => setSearchText(e.target.value)}
         />
         <Select
-          onChange={setStatusFilter}
+          style={{ width: 120 }}
+          value={statusFilter}
           options={[
             { label: t('table.filter.all'), value: 'all' },
             { label: t('table.filter.passed'), value: 'passed' },
             { label: t('table.filter.failed'), value: 'failed' },
           ]}
-          style={{ width: 120 }}
-          value={statusFilter}
+          onChange={setStatusFilter}
         />
       </Flexbox>
-      <Table columns={columns} dataSource={filteredResults} rowKey="testCaseId" size="small" />
+      <Table
+        columns={columns}
+        dataSource={filteredResults}
+        pagination={{ pageSize: 20, simple: true, size: 'small' }}
+        rowKey="testCaseId"
+        size="small"
+      />
     </Flexbox>
   );
 });

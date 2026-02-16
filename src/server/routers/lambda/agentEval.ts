@@ -1,4 +1,3 @@
-/* eslint-disable sort-keys-fix/sort-keys-fix  */
 import { parseDataset } from '@lobechat/eval-dataset-parser';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
@@ -660,8 +659,11 @@ export const agentEvalRouter = router({
         });
       }
 
+      // Set status to pending immediately so frontend gets feedback
+      await ctx.runModel.update(runId, { status: 'pending' });
+
       // Trigger workflow
-      await AgentEvalRunWorkflow.triggerRunBenchmark({ runId, force });
+      await AgentEvalRunWorkflow.triggerRunBenchmark({ force, runId, userId: ctx.userId });
 
       return { success: true, runId };
     }),

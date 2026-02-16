@@ -21,11 +21,12 @@ interface AgentOption {
 
 interface RunCreateModalProps {
   benchmarkId: string;
+  datasetId?: string;
   onClose: () => void;
   open: boolean;
 }
 
-const RunCreateModal = memo<RunCreateModalProps>(({ open, onClose, benchmarkId }) => {
+const RunCreateModal = memo<RunCreateModalProps>(({ open, onClose, benchmarkId, datasetId }) => {
   const { t } = useTranslation('eval');
   const { t: tChat } = useTranslation('chat');
   const navigate = useNavigate();
@@ -46,6 +47,12 @@ const RunCreateModal = memo<RunCreateModalProps>(({ open, onClose, benchmarkId }
       .then((list) => setAgents(list as AgentOption[]))
       .finally(() => setLoadingAgents(false));
   }, [open]);
+
+  useEffect(() => {
+    if (open && datasetId) {
+      form.setFieldsValue({ datasetId });
+    }
+  }, [open, datasetId]);
 
   const inboxAgent: AgentOption = useMemo(
     () => ({
@@ -78,15 +85,12 @@ const RunCreateModal = memo<RunCreateModalProps>(({ open, onClose, benchmarkId }
     [allAgents],
   );
 
-  const handleOpenAgent = useCallback(
-    (agentId: string, e: React.MouseEvent) => {
-      e.stopPropagation();
-      e.preventDefault();
-      const url = SESSION_CHAT_URL(agentId);
-      window.open(url, `agent_${agentId}`, 'noopener,noreferrer');
-    },
-    [],
-  );
+  const handleOpenAgent = useCallback((agentId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    const url = SESSION_CHAT_URL(agentId);
+    window.open(url, `agent_${agentId}`, 'noopener,noreferrer');
+  }, []);
 
   const handleSubmit = async (shouldStart: boolean) => {
     const values = await form.validateFields();
@@ -115,20 +119,20 @@ const RunCreateModal = memo<RunCreateModalProps>(({ open, onClose, benchmarkId }
 
   return (
     <Modal
+      open={open}
+      title={t('run.create.title')}
       footer={
         <Space>
           <Button onClick={handleClose}>{t('common.later')}</Button>
           <Button loading={isCreatingRun} onClick={() => handleSubmit(false)}>
             {t('run.create.createOnly')}
           </Button>
-          <Button loading={isCreatingRun} onClick={() => handleSubmit(true)} type="primary">
+          <Button loading={isCreatingRun} type="primary" onClick={() => handleSubmit(true)}>
             {t('run.create.confirm')}
           </Button>
         </Space>
       }
       onCancel={handleClose}
-      open={open}
-      title={t('run.create.title')}
     >
       <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
         <Form.Item
@@ -137,6 +141,8 @@ const RunCreateModal = memo<RunCreateModalProps>(({ open, onClose, benchmarkId }
           rules={[{ message: t('run.create.dataset.required'), required: true }]}
         >
           <Select
+            placeholder={t('run.create.dataset.placeholder')}
+            variant="filled"
             options={datasetList.map((ds) => ({
               label: (
                 <Space>
@@ -150,18 +156,20 @@ const RunCreateModal = memo<RunCreateModalProps>(({ open, onClose, benchmarkId }
               ),
               value: ds.id,
             }))}
-            placeholder={t('run.create.dataset.placeholder')}
-            variant="filled"
           />
         </Form.Item>
 
         <Form.Item label={t('run.create.agent')} name="targetAgentId">
           <Select
             allowClear
+            showSearch
+            loading={loadingAgents}
+            options={agentOptions}
+            placeholder={t('run.create.agent.placeholder')}
+            variant="filled"
             filterOption={(input, option) =>
               (option?.searchLabel as string)?.toLowerCase().includes(input.toLowerCase())
             }
-            loading={loadingAgents}
             optionRender={(option) => (
               <span
                 style={{
@@ -174,15 +182,11 @@ const RunCreateModal = memo<RunCreateModalProps>(({ open, onClose, benchmarkId }
                 {option.label}
                 <ActionIcon
                   icon={SquareArrowOutUpRight}
-                  onClick={(e) => handleOpenAgent(option.value as string, e)}
                   size="small"
+                  onClick={(e) => handleOpenAgent(option.value as string, e)}
                 />
               </span>
             )}
-            options={agentOptions}
-            placeholder={t('run.create.agent.placeholder')}
-            showSearch
-            variant="filled"
           />
         </Form.Item>
 
@@ -203,12 +207,13 @@ const RunCreateModal = memo<RunCreateModalProps>(({ open, onClose, benchmarkId }
                   >
                     <InputNumber max={10} min={1} style={{ width: '100%' }} variant="filled" />
                   </Form.Item>
-                  <Form.Item
-                    initialValue={300_000}
-                    label={t('run.config.timeout')}
-                    name="timeout"
-                  >
-                    <InputNumber min={30_000} step={30_000} style={{ width: '100%' }} variant="filled" />
+                  <Form.Item initialValue={300_000} label={t('run.config.timeout')} name="timeout">
+                    <InputNumber
+                      min={30_000}
+                      step={30_000}
+                      style={{ width: '100%' }}
+                      variant="filled"
+                    />
                   </Form.Item>
                 </>
               ),

@@ -227,6 +227,7 @@ export class AgentRuntimeService {
       toolSourceMap,
       stepCallbacks,
       userInterventionConfig,
+      completionWebhook,
     } = params;
 
     try {
@@ -242,6 +243,7 @@ export class AgentRuntimeService {
         messages: initialMessages,
         metadata: {
           agentConfig,
+          completionWebhook,
           // need be removed
           modelRuntimeConfig,
           userId,
@@ -433,19 +435,26 @@ export class AgentRuntimeService {
         log('[%s] Scheduled next step %d', operationId, nextStepIndex);
       }
 
-      // Check if operation is complete, call onComplete callback
-      if (!shouldContinue && callbacks?.onComplete) {
+      // Check if operation is complete
+      if (!shouldContinue) {
         const reason = this.determineCompletionReason(stepResult.newState);
-        try {
-          await callbacks.onComplete({
-            finalState: stepResult.newState,
-            operationId,
-            reason,
-          });
-          // Clean up callbacks after operation completes
-          this.unregisterStepCallbacks(operationId);
-        } catch (callbackError) {
-          log('[%s] onComplete callback error: %O', operationId, callbackError);
+
+        // Trigger completion webhook (fire-and-forget)
+        await this.triggerCompletionWebhook(stepResult.newState, operationId, reason);
+
+        // Call onComplete callback
+        if (callbacks?.onComplete) {
+          try {
+            await callbacks.onComplete({
+              finalState: stepResult.newState,
+              operationId,
+              reason,
+            });
+            // Clean up callbacks after operation completes
+            this.unregisterStepCallbacks(operationId);
+          } catch (callbackError) {
+            log('[%s] onComplete callback error: %O', operationId, callbackError);
+          }
         }
       }
 
@@ -479,6 +488,9 @@ export class AgentRuntimeService {
 
       // Save the error state to coordinator so getOperationStatus can retrieve it
       await this.coordinator.saveAgentState(operationId, finalStateWithError);
+
+      // Trigger completion webhook on error (fire-and-forget)
+      await this.triggerCompletionWebhook(finalStateWithError, operationId, 'error');
 
       // Also call onComplete callback when execution fails
       if (callbacks?.onComplete) {
@@ -884,6 +896,35 @@ export class AgentRuntimeService {
     }
 
     return { newState: state, nextContext: undefined };
+  }
+
+  /**
+   * Trigger completion webhook if configured in state metadata.
+   * Fire-and-forget: errors are logged but never thrown.
+   */
+  private async triggerCompletionWebhook(
+    state: any,
+    operationId: string,
+    reason: StepCompletionReason,
+  ): Promise<void> {
+    const webhook = state.metadata?.completionWebhook;
+    if (!webhook?.url) return;
+
+    try {
+      log('[%s] Triggering completion webhook: %s', operationId, webhook.url);
+      await fetch(webhook.url, {
+        body: JSON.stringify({
+          ...webhook.body,
+          operationId,
+          reason,
+          status: state.status,
+        }),
+        headers: { 'Content-Type': 'application/json' },
+        method: 'POST',
+      });
+    } catch (error) {
+      log('[%s] Completion webhook failed: %O', operationId, error);
+    }
   }
 
   /**

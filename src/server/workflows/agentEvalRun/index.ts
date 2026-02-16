@@ -10,6 +10,7 @@ const log = debug('lobe-cloud:workflows:agent-eval-run');
 const WORKFLOW_PATHS = {
   executeTestCase: '/api/workflows/agent-eval-run/execute-test-case',
   finalizeRun: '/api/workflows/agent-eval-run/finalize-run',
+  onTrajectoryComplete: '/api/workflows/agent-eval-run/on-trajectory-complete',
   paginateTestCases: '/api/workflows/agent-eval-run/paginate-test-cases',
   runAgentTrajectory: '/api/workflows/agent-eval-run/run-agent-trajectory',
   runBenchmark: '/api/workflows/agent-eval-run/run-benchmark',
@@ -20,27 +21,41 @@ export interface RunBenchmarkPayload {
   dryRun?: boolean;
   force?: boolean;
   runId: string;
+  userId: string;
 }
 
 export interface PaginateTestCasesPayload {
   cursor?: string; // testCase.id
   runId: string;
   testCaseIds?: string[]; // For fanout chunks
+  userId: string;
 }
 
 export interface ExecuteTestCasePayload {
   runId: string;
   testCaseId: string;
+  userId: string;
 }
 
 export interface RunAgentTrajectoryPayload {
   attemptNumber: number;
   runId: string;
   testCaseId: string;
+  userId: string;
 }
 
 export interface FinalizeRunPayload {
   runId: string;
+  userId: string;
+}
+
+export interface OnTrajectoryCompletePayload {
+  operationId: string;
+  reason: string;
+  runId: string;
+  status: string;
+  testCaseId: string;
+  userId: string;
 }
 
 /**
@@ -141,12 +156,12 @@ export class AgentEvalRunWorkflow {
    */
   static async filterTestCasesNeedingExecution(
     db: LobeChatDatabase,
-    runId: string,
-    testCaseIds: string[],
+    params: { runId: string; testCaseIds: string[]; userId: string },
   ): Promise<string[]> {
+    const { runId, testCaseIds, userId } = params;
     if (testCaseIds.length === 0) return [];
 
-    const agentEvalRunTopicModel = new AgentEvalRunTopicModel(db, ''); // userId not needed for query
+    const agentEvalRunTopicModel = new AgentEvalRunTopicModel(db, userId);
 
     // Get existing RunTopics for this run
     const existingRunTopics = await agentEvalRunTopicModel.findByRunId(runId);

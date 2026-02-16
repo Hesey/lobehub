@@ -2,12 +2,12 @@
 
 import { Icon } from '@lobehub/ui';
 import { createStaticStyles } from 'antd-style';
-import { Activity, AlertTriangle, CheckCircle2, Clock, Pause, XCircle } from 'lucide-react';
+import { Activity, CheckCircle2, Clock, Pause, XCircle } from 'lucide-react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 const statusConfig: Record<string, { cls: string; icon: any }> = {
-  aborted: { cls: 'warning', icon: Pause },
+  aborted: { cls: 'default', icon: Pause },
   completed: { cls: 'success', icon: CheckCircle2 },
   failed: { cls: 'error', icon: XCircle },
   idle: { cls: 'default', icon: Clock },
@@ -35,6 +35,7 @@ const styles = createStaticStyles(({ css, cssVar }) => ({
     display: inline-flex;
     gap: 4px;
     align-items: center;
+
     font-size: 11px;
     font-weight: 500;
     line-height: 1;

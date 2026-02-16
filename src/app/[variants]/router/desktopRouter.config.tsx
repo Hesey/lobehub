@@ -397,10 +397,7 @@ export const desktopRoutes: RouteConfig[] = [
       {
         children: [
           {
-            element: dynamicElement(
-              () => import('../(main)/eval'),
-              'Desktop > Eval > Overview',
-            ),
+            element: dynamicElement(() => import('../(main)/eval'), 'Desktop > Eval > Overview'),
             index: true,
           },
           {
@@ -424,9 +421,7 @@ export const desktopRoutes: RouteConfig[] = [
                   {
                     element: dynamicElement(
                       () =>
-                        import(
-                          '../(main)/eval/bench/[benchmarkId]/runs/[runId]/cases/[caseId]'
-                        ),
+                        import('../(main)/eval/bench/[benchmarkId]/runs/[runId]/cases/[caseId]'),
                       'Desktop > Eval > Case Detail',
                     ),
                     path: 'cases/:caseId',
@@ -434,14 +429,18 @@ export const desktopRoutes: RouteConfig[] = [
                 ],
                 path: 'runs/:runId',
               },
+              {
+                element: dynamicElement(
+                  () => import('../(main)/eval/bench/[benchmarkId]/datasets/[datasetId]'),
+                  'Desktop > Eval > Dataset Detail',
+                ),
+                path: 'datasets/:datasetId',
+              },
             ],
             path: 'bench/:benchmarkId',
           },
         ],
-        element: dynamicElement(
-          () => import('../(main)/eval/_layout'),
-          'Desktop > Eval > Layout',
-        ),
+        element: dynamicElement(() => import('../(main)/eval/_layout'), 'Desktop > Eval > Layout'),
         errorElement: <ErrorBoundary resetPath="/eval" />,
         path: 'eval',
       },

@@ -78,6 +78,15 @@ export interface OperationCreationParams {
     topicId?: string | null;
   };
   autoStart?: boolean;
+  /**
+   * Completion webhook configuration
+   * When set, an HTTP POST will be fired when the operation completes (success or error).
+   * The webhook is persisted in Redis state so it survives across QStash step boundaries.
+   */
+  completionWebhook?: {
+    body?: Record<string, unknown>;
+    url: string;
+  };
   initialContext: AgentRuntimeContext;
   initialMessages?: any[];
   modelRuntimeConfig?: any;
