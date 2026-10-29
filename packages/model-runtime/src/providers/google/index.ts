@@ -1,11 +1,12 @@
 import {
   type GenerateContentConfig,
+  type Tool as GoogleFunctionCallTool,
   type HttpOptions,
   type ThinkingConfig,
-  type Tool as GoogleFunctionCallTool,
 } from '@google/genai';
 import { GoogleGenAI } from '@google/genai';
 import debug from 'debug';
+import googleModels from 'model-bank/google';
 
 import { type LobeRuntimeAI } from '../../core/BaseAI';
 import { buildGoogleMessages, buildGoogleTools } from '../../core/contextBuilders/google';
@@ -142,6 +143,12 @@ export class LobeGoogleAI implements LobeRuntimeAI {
     try {
       const payload = this.buildPayload(rawPayload);
       const { model, thinkingBudget, thinkingLevel, imageAspectRatio, imageResolution } = payload;
+      const modelCard = googleModels.find((item) => item.id === model && item.type === 'chat');
+      const disabledParams =
+        modelCard?.type === 'chat' ? modelCard.settings?.disabledParams : undefined;
+      const supportsImageOutput =
+        modelsWithModalities.has(model) ||
+        (modelCard?.type === 'chat' && modelCard.abilities?.imageOutput);
 
       // https://ai.google.dev/gemini-api/docs/thinking#set-budget
       const thinkingConfig = resolveGoogleThinkingConfig(model, {
@@ -167,14 +174,14 @@ export class LobeGoogleAI implements LobeRuntimeAI {
       const config: GenerateContentConfig = {
         abortSignal: originalSignal,
         imageConfig:
-          modelsWithModalities.has(model) && imageAspectRatio
+          supportsImageOutput && (imageAspectRatio || imageResolution)
             ? {
-                aspectRatio: imageAspectRatio,
-                imageSize: imageResolution,
+                aspectRatio: imageAspectRatio === 'auto' ? undefined : imageAspectRatio,
+                imageSize: imageResolution === '512px' ? '512' : imageResolution,
               }
             : undefined,
         maxOutputTokens: payload.max_tokens,
-        responseModalities: modelsWithModalities.has(model) ? ['Text', 'Image'] : undefined,
+        responseModalities: supportsImageOutput ? ['Text', 'Image'] : undefined,
         // avoid wide sensitive words
         // refs: https://github.com/lobehub/lobe-chat/pull/1418
         safetySettings: [
@@ -198,15 +205,17 @@ export class LobeGoogleAI implements LobeRuntimeAI {
         systemInstruction: modelsDisableInstuction.has(model)
           ? undefined
           : (payload.system as string),
-        temperature: modelsWithModalities.has(model)
-          ? Math.min(payload.temperature ?? 1, 1)
-          : payload.temperature,
+        temperature: disabledParams?.includes('temperature')
+          ? undefined
+          : supportsImageOutput
+            ? Math.min(payload.temperature ?? 1, 1)
+            : payload.temperature,
         thinkingConfig:
           modelsDisableInstuction.has(model) || model.toLowerCase().includes('learnlm')
             ? undefined
             : thinkingConfig,
         tools: this.buildGoogleToolsWithSearch(payload.tools, payload),
-        topP: payload.top_p,
+        topP: disabledParams?.includes('top_p') ? undefined : payload.top_p,
       };
 
       const inputStartAt = Date.now();

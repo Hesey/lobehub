@@ -480,7 +480,15 @@ describe('resolveGoogleThinkingBudget', () => {
  */
 describe('thinkingBudget and thinkingLevel mutual exclusivity', () => {
   describe('Gemini 3.0+ models (supports thinkingLevel)', () => {
-    const models = ['gemini-3-pro', 'gemini-3-flash', 'gemini-3.0-pro-preview'];
+    const models = [
+      'gemini-3-pro',
+      'gemini-3-flash',
+      'gemini-3.0-pro-preview',
+      'gemini-3.8-flash',
+      'gemini-pro-latest',
+      'gemini-flash-latest',
+      'gemini-flash-lite-latest',
+    ];
 
     it.each(models)('%s: should use thinkingLevel only when set', (model) => {
       const result = resolveGoogleThinkingConfig(model, { thinkingLevel: 'high' });

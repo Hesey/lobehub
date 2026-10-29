@@ -47,7 +47,7 @@ export interface LobeAgentChatConfig {
   /**
    * 图片生成分辨率（含 512px）
    */
-  imageResolution2?: '512px' | '1K' | '2K' | '4K';
+  imageResolution2?: '512' | '512px' | '1K' | '2K' | '4K';
   /**
    * 输出文本详细程度控制
    */
@@ -87,6 +87,7 @@ export interface LobeAgentChatConfig {
 
 export const AgentChatConfigSchema = z.object({
   autoCreateTopicThreshold: z.number().default(2),
+  disableContextCaching: z.boolean().optional(),
   displayMode: z.enum(['chat', 'docs']).optional(),
   enableAutoCreateTopic: z.boolean().optional(),
   enableCompressHistory: z.boolean().optional(),
@@ -99,8 +100,7 @@ export const AgentChatConfigSchema = z.object({
   imageAspectRatio: z.string().optional(),
   imageAspectRatio2: z.string().optional(),
   imageResolution: z.enum(['1K', '2K', '4K']).optional(),
-  imageResolution2: z.enum(['512px', '1K', '2K', '4K']).optional(),
-  disableContextCaching: z.boolean().optional(),
+  imageResolution2: z.enum(['512', '512px', '1K', '2K', '4K']).optional(),
   reasoningBudgetToken: z.number().optional(),
   reasoningEffort: z.enum(['low', 'medium', 'high']).optional(),
   searchFCModel: z

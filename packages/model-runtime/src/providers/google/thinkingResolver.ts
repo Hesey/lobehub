@@ -50,30 +50,30 @@ export interface ResolvedGoogleThinkingConfig {
  * Budget constraints for each model category
  */
 const THINKING_BUDGET_CONSTRAINTS = {
-  PRO_MIN: 128,
-  PRO_MAX: 32_768,
-  FLASH_MAX: 24_576,
-  FLASH_LITE_MIN: 512,
   FLASH_LITE_MAX: 24_576,
+  FLASH_LITE_MIN: 512,
+  FLASH_MAX: 24_576,
+  PRO_MAX: 32_768,
+  PRO_MIN: 128,
 } as const;
 
 /**
  * Model category patterns - evaluated in order, first match wins
  */
 const MODEL_CATEGORY_PATTERNS: Record<Exclude<GoogleThinkingModelCategory, 'other'>, RegExp[]> = {
-  robotics: [/robotics-er-1\.5-preview/i],
-  flashLite: [
-    /gemini-\d+(?:\.\d+)?-flash-lite/i, // gemini-2.5-flash-lite, gemini-3.0-flash-lite
-    /flash-lite-latest/i,
-  ],
   flash: [
     /gemini-\d+(?:\.\d+)?-flash(?!-lite)/i, // gemini-2.5-flash, gemini-3.0-flash (but not flash-lite)
     /flash-latest/i,
+  ],
+  flashLite: [
+    /gemini-\d+(?:\.\d+)?-flash-lite/i, // gemini-2.5-flash-lite, gemini-3.0-flash-lite
+    /flash-lite-latest/i,
   ],
   pro: [
     /gemini-\d+(?:\.\d+)?-pro/i, // gemini-2.5-pro, gemini-3.0-pro, gemini-3-pro
     /pro-latest/i,
   ],
+  robotics: [/robotics-er-1\.5-preview/i],
 };
 
 /**
@@ -92,6 +92,7 @@ const THINKING_ENABLED_PATTERNS: RegExp[] = [
  * Patterns to detect Gemini 3.0+ models (which support thinkingLevel)
  */
 const GEMINI_3_PATTERNS: RegExp[] = [
+  /^gemini-(?:pro|flash|flash-lite)-latest$/i, // Aliases now point to Gemini 3.x models.
   /gemini-3(?:\.\d+)?-/i, // gemini-3-pro, gemini-3.0-flash
 ];
 

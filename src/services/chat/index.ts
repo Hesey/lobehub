@@ -192,8 +192,12 @@ class ChatService {
         extendParams.thinkingBudget = chatConfig.thinkingBudget;
       }
 
-      if (modelExtendParams!.includes('thinkingLevel') && chatConfig.thinkingLevel) {
-        extendParams.thinkingLevel = chatConfig.thinkingLevel;
+      if (modelExtendParams!.includes('thinkingLevel')) {
+        extendParams.thinkingLevel =
+          chatConfig.thinkingLevel ??
+          (payload.model === 'gemini-3.1-flash-lite-preview'
+            ? chatConfig.thinkingLevel5
+            : undefined);
       }
 
       if (modelExtendParams!.includes('thinkingLevel2') && chatConfig.thinkingLevel2) {

@@ -338,6 +338,24 @@ describe('createGoogleImage', () => {
   });
 
   describe('Gemini 2.5 Flash Image Models (:image)', () => {
+    it.each(['512', '512px'])(
+      'normalizes auto aspect ratio and resolution %s for Nano Banana 2',
+      async (resolution) => {
+        const data =
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+        const spy = vi.spyOn(mockClient.models, 'generateContent').mockResolvedValue({
+          candidates: [{ content: { parts: [{ inlineData: { data, mimeType: 'image/png' } }] } }],
+        } as any);
+        await createGoogleImage(mockClient, provider, {
+          model: 'gemini-3.1-flash-image:image',
+          params: { prompt: 'Draw a cat', aspectRatio: 'auto', resolution },
+        });
+        expect(spy.mock.calls[0][0].model).toBe('gemini-3.1-flash-image');
+        expect(spy.mock.calls[0][0].config?.imageConfig?.aspectRatio).toBeUndefined();
+        expect(spy.mock.calls[0][0].config?.imageConfig?.imageSize).toBe('512');
+      },
+    );
+
     it('should create image successfully using generateContent for :image model', async () => {
       // Arrange
       const realBase64ImageData =
@@ -531,9 +549,7 @@ describe('createGoogleImage', () => {
         base64: inputImageBase64,
         mimeType: '',
       });
-      vi.spyOn(imageToBase64Module, 'inferContentTypeFromImageUrl').mockReturnValue(
-        'image/jpeg',
-      );
+      vi.spyOn(imageToBase64Module, 'inferContentTypeFromImageUrl').mockReturnValue('image/jpeg');
 
       const mockContentResponse = {
         candidates: [

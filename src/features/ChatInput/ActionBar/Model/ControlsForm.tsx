@@ -269,7 +269,13 @@ const ControlsForm = memo(() => {
   return (
     <Form
       form={form}
-      initialValues={config}
+      initialValues={{
+        ...config,
+        imageResolution2: config.imageResolution2 === '512px' ? '512' : config.imageResolution2,
+        thinkingLevel:
+          config.thinkingLevel ??
+          (model === 'gemini-3.1-flash-lite-preview' ? config.thinkingLevel5 : undefined),
+      }}
       items={
         (modelExtendParams || [])
           .map((item: any) => items.find((i) => i.name === item))

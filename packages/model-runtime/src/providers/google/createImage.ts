@@ -91,7 +91,7 @@ async function generateByImageModel(
 
   const response = await client.models.generateImages({
     config: {
-      aspectRatio: params.aspectRatio,
+      aspectRatio: params.aspectRatio === 'auto' ? undefined : params.aspectRatio,
       numberOfImages: 1,
     },
     model,
@@ -157,11 +157,11 @@ async function generateImageByChatModel(
 
   const config: GenerateContentConfig = {
     responseModalities: ['Image'],
-    ...(params.aspectRatio
+    ...(params.aspectRatio || params.resolution
       ? {
           imageConfig: {
-            aspectRatio: params.aspectRatio,
-            imageSize: params.resolution,
+            aspectRatio: params.aspectRatio === 'auto' ? undefined : params.aspectRatio,
+            imageSize: params.resolution === '512px' ? '512' : params.resolution,
           },
         }
       : {}),

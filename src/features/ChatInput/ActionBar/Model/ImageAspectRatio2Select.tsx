@@ -3,6 +3,7 @@ import { memo, useMemo } from 'react';
 import useMergeState from 'use-merge-value';
 
 const NANO_BANANA_2_ASPECT_RATIOS = [
+  'auto',
   '1:1',
   '2:3',
   '3:2',
@@ -28,7 +29,7 @@ export interface ImageAspectRatio2SelectProps {
 }
 
 const ImageAspectRatio2Select = memo<ImageAspectRatio2SelectProps>(
-  ({ value, onChange, defaultValue = '1:1' }) => {
+  ({ value, onChange, defaultValue = 'auto' }) => {
     const [ratio, setRatio] = useMergeState(value ?? defaultValue, {
       defaultValue,
       onChange,

@@ -584,6 +584,65 @@ describe('LobeGoogleAI', () => {
   });
 });
 
+describe('Gemini model metadata request parameters', () => {
+  it.each(['gemini-3.8-flash', 'gemini-flash-latest', 'gemini-3.5-flash-lite'])(
+    'omits disabled sampling parameters for %s',
+    async (model) => {
+      const stream = (async function* (): AsyncGenerator<GenerateContentResponse> {})();
+      const spy = vi
+        .spyOn(instance['client'].models, 'generateContentStream')
+        .mockResolvedValue(stream);
+      await instance.chat({
+        messages: [{ content: 'Hello', role: 'user' }],
+        model,
+        temperature: 0.5,
+        top_p: 0.9,
+        thinkingLevel: 'medium',
+      });
+      const config = spy.mock.calls[0][0].config!;
+      expect(config.temperature).toBeUndefined();
+      expect(config.topP).toBeUndefined();
+      expect(config.thinkingConfig).toMatchObject({ thinkingLevel: 'medium' });
+      expect(config.thinkingConfig?.thinkingBudget).toBeUndefined();
+    },
+  );
+
+  it.each(['gemini-3.1-flash-image', 'gemini-3.1-flash-lite-image'])(
+    'enables image output for the model-bank entry %s',
+    async (model) => {
+      const stream = (async function* (): AsyncGenerator<GenerateContentResponse> {})();
+      const spy = vi
+        .spyOn(instance['client'].models, 'generateContentStream')
+        .mockResolvedValue(stream);
+      await instance.chat({
+        messages: [{ content: 'Draw a cat', role: 'user' }],
+        model,
+        imageAspectRatio: 'auto',
+      });
+      const config = spy.mock.calls[0][0].config!;
+      expect(config.responseModalities).toEqual(['Text', 'Image']);
+      expect(config.imageConfig?.aspectRatio).toBeUndefined();
+      expect(config.imageConfig?.imageSize).toBeUndefined();
+    },
+  );
+
+  it.each(['512', '512px'])(
+    'sends API resolution 512 for saved value %s',
+    async (imageResolution) => {
+      const stream = (async function* (): AsyncGenerator<GenerateContentResponse> {})();
+      const spy = vi
+        .spyOn(instance['client'].models, 'generateContentStream')
+        .mockResolvedValue(stream);
+      await instance.chat({
+        messages: [{ content: 'Draw a cat', role: 'user' }],
+        model: 'gemini-3.1-flash-image',
+        imageResolution,
+      });
+      expect(spy.mock.calls[0][0].config?.imageConfig?.imageSize).toBe('512');
+    },
+  );
+});
+
 describe('thinkingConfig includeThoughts logic', () => {
   it('should enable thinking when thinkingBudget is set', async () => {
     const mockStreamData = (async function* (): AsyncGenerator<GenerateContentResponse> {})();

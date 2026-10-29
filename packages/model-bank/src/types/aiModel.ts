@@ -26,6 +26,7 @@ export const AiModelTypeSchema = z.enum([
 export type AiModelType = z.infer<typeof AiModelTypeSchema>;
 
 export interface ModelAbilities {
+  audio?: boolean;
   /**
    * whether model supports file upload
    */
@@ -129,6 +130,7 @@ export interface ChatModelPricing extends BasicModelPricing {
 
 // New pricing system types
 export type PricingUnitName =
+  | 'videoInput'
   // Text-based pricing units
   | 'textInput' // corresponds to ChatModelPricing.input
   | 'textOutput' // corresponds to ChatModelPricing.output
@@ -201,7 +203,10 @@ export interface AIBaseModelCard {
    */
   displayName?: string;
   enabled?: boolean;
+  family?: string;
+  generation?: string;
   id: string;
+  knowledgeCutoff?: string;
   /**
    * whether model is legacy (deprecated but not removed yet)
    */
@@ -250,6 +255,7 @@ export type ExtendParamsType =
   | 'urlContext';
 
 export interface AiModelSettings {
+  disabledParams?: (keyof LLMParams)[];
   extendParams?: ExtendParamsType[];
   /**
    * 模型层实现搜索的方式

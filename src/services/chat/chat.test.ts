@@ -313,13 +313,13 @@ describe('ChatService', () => {
         );
       });
 
-      it('should map thinkingLevel5 for Gemini 3.1 Flash-Lite Preview', async () => {
+      it('should preserve saved thinkingLevel5 when Flash-Lite metadata uses thinkingLevel', async () => {
         const getChatCompletionSpy = vi.spyOn(chatService, 'getChatCompletion');
         const messages = [{ content: 'Test thinking level 5', role: 'user' }] as UIChatMessage[];
 
         vi.spyOn(aiModelSelectors, 'isModelHasExtendParams').mockReturnValue(() => true);
         vi.spyOn(aiModelSelectors, 'modelExtendParams').mockReturnValue(() => [
-          'thinkingLevel5',
+          'thinkingLevel',
           'urlContext',
         ]);
 
@@ -1523,13 +1523,13 @@ describe('ChatService private methods', () => {
       );
     });
 
-    it('should map thinkingLevel5 for Gemini 3.1 Flash-Lite Preview', async () => {
+    it('should preserve saved thinkingLevel5 when Flash-Lite metadata uses thinkingLevel', async () => {
       const getChatCompletionSpy = vi.spyOn(chatService, 'getChatCompletion');
       const messages = [{ content: 'Test thinking level 5', role: 'user' }] as UIChatMessage[];
 
       vi.spyOn(aiModelSelectors, 'isModelHasExtendParams').mockReturnValue(() => true);
       vi.spyOn(aiModelSelectors, 'modelExtendParams').mockReturnValue(() => [
-        'thinkingLevel5',
+        'thinkingLevel',
         'urlContext',
       ]);
 
