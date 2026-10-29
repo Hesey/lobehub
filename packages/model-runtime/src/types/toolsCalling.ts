@@ -33,6 +33,7 @@ export interface MessageToolCall {
   /**
    * The type of the tool. Currently, only `function` is supported.
    */
+  thoughtSignature?: string;
   type: 'function' | string;
 }
 
@@ -42,6 +43,7 @@ export const MessageToolCallSchema = z.object({
     name: z.string(),
   }),
   id: z.string(),
+  thoughtSignature: z.string().optional(),
   type: z.string(),
 });
 

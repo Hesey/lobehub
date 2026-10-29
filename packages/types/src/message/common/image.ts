@@ -1,6 +1,7 @@
 export interface ChatImageItem {
   alt: string;
   id: string;
+  thoughtSignature?: string;
   url: string;
 }
 

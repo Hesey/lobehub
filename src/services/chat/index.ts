@@ -192,6 +192,42 @@ class ChatService {
         extendParams.thinkingBudget = chatConfig.thinkingBudget;
       }
 
+      if (modelExtendParams!.includes('thinkingLevel') && chatConfig.thinkingLevel) {
+        extendParams.thinkingLevel = chatConfig.thinkingLevel;
+      }
+
+      if (modelExtendParams!.includes('thinkingLevel2') && chatConfig.thinkingLevel2) {
+        extendParams.thinkingLevel = chatConfig.thinkingLevel2;
+      }
+
+      if (modelExtendParams!.includes('thinkingLevel3') && chatConfig.thinkingLevel3) {
+        extendParams.thinkingLevel = chatConfig.thinkingLevel3;
+      }
+
+      if (modelExtendParams!.includes('thinkingLevel4') && chatConfig.thinkingLevel4) {
+        extendParams.thinkingLevel = chatConfig.thinkingLevel4;
+      }
+
+      if (modelExtendParams!.includes('thinkingLevel5') && chatConfig.thinkingLevel5) {
+        extendParams.thinkingLevel = chatConfig.thinkingLevel5;
+      }
+
+      if (modelExtendParams!.includes('imageAspectRatio') && chatConfig.imageAspectRatio) {
+        extendParams.imageAspectRatio = chatConfig.imageAspectRatio;
+      }
+
+      if (modelExtendParams!.includes('imageAspectRatio2') && chatConfig.imageAspectRatio2) {
+        extendParams.imageAspectRatio = chatConfig.imageAspectRatio2;
+      }
+
+      if (modelExtendParams!.includes('imageResolution') && chatConfig.imageResolution) {
+        extendParams.imageResolution = chatConfig.imageResolution;
+      }
+
+      if (modelExtendParams!.includes('imageResolution2') && chatConfig.imageResolution2) {
+        extendParams.imageResolution = chatConfig.imageResolution2;
+      }
+
       if (modelExtendParams!.includes('urlContext') && chatConfig.urlContext) {
         extendParams.urlContext = chatConfig.urlContext;
       }

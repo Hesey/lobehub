@@ -5,6 +5,7 @@ import { LOADING_FLAT } from '@/const/message';
 import { chatService } from '@/services/chat';
 import { messageService } from '@/services/message';
 import { chatSelectors } from '@/store/chat/selectors';
+import { useFileStore } from '@/store/file';
 import { messageMapKey } from '@/store/chat/utils/messageMapKey';
 import { UploadFileItem } from '@/types/files/upload';
 
@@ -675,6 +676,47 @@ describe('chatMessage actions', () => {
       streamSpy.mockRestore();
     });
 
+    it('should handle content_part text chunks during streaming', async () => {
+      const { result } = renderHook(() => useChatStore());
+      const messages = [createMockMessage({ role: 'user' })];
+      const dispatchSpy = vi.spyOn(result.current, 'internal_dispatchMessage');
+
+      const streamSpy = vi
+        .spyOn(chatService, 'createAssistantMessageStream')
+        .mockImplementation(async ({ onMessageHandle, onFinish }) => {
+          await onMessageHandle?.({
+            type: 'content_part',
+            partType: 'text',
+            content: 'Hello',
+          } as any);
+          await onMessageHandle?.({
+            type: 'content_part',
+            partType: 'text',
+            content: ' World',
+          } as any);
+          await onFinish?.('Hello World', {} as any);
+        });
+
+      await act(async () => {
+        await result.current.internal_fetchAIChatMessage({
+          messages,
+          messageId: TEST_IDS.ASSISTANT_MESSAGE_ID,
+          model: 'gemini-3-flash-preview',
+          provider: 'google',
+        });
+      });
+
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: TEST_IDS.ASSISTANT_MESSAGE_ID,
+          type: 'updateMessage',
+          value: expect.objectContaining({ content: 'Hello World' }),
+        }),
+      );
+
+      streamSpy.mockRestore();
+    });
+
     it('should handle reasoning chunks during streaming', async () => {
       const { result } = renderHook(() => useChatStore());
       const messages = [createMockMessage({ role: 'user' })];
@@ -694,6 +736,47 @@ describe('chatMessage actions', () => {
           messageId: TEST_IDS.ASSISTANT_MESSAGE_ID,
           model: 'gpt-4o-mini',
           provider: 'openai',
+        });
+      });
+
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: TEST_IDS.ASSISTANT_MESSAGE_ID,
+          type: 'updateMessage',
+          value: expect.objectContaining({ reasoning: { content: 'Thinking...' } }),
+        }),
+      );
+
+      streamSpy.mockRestore();
+    });
+
+    it('should handle reasoning_part text chunks during streaming', async () => {
+      const { result } = renderHook(() => useChatStore());
+      const messages = [createMockMessage({ role: 'user' })];
+      const dispatchSpy = vi.spyOn(result.current, 'internal_dispatchMessage');
+
+      const streamSpy = vi
+        .spyOn(chatService, 'createAssistantMessageStream')
+        .mockImplementation(async ({ onMessageHandle, onFinish }) => {
+          await onMessageHandle?.({
+            type: 'reasoning_part',
+            partType: 'text',
+            content: 'Thinking...',
+          } as any);
+          await onMessageHandle?.({
+            type: 'content_part',
+            partType: 'text',
+            content: 'Answer',
+          } as any);
+          await onFinish?.('Answer', {} as any);
+        });
+
+      await act(async () => {
+        await result.current.internal_fetchAIChatMessage({
+          messages,
+          messageId: TEST_IDS.ASSISTANT_MESSAGE_ID,
+          model: 'gemini-3.1-pro-preview',
+          provider: 'google',
         });
       });
 
@@ -815,6 +898,127 @@ describe('chatMessage actions', () => {
           type: 'updateMessage',
           value: expect.objectContaining({
             imageList: expect.any(Array),
+          }),
+        }),
+      );
+
+      streamSpy.mockRestore();
+    });
+
+    it('should upload image content parts during streaming', async () => {
+      const { result } = renderHook(() => useChatStore());
+      const messages = [createMockMessage({ role: 'user' })];
+      const dispatchSpy = vi.spyOn(result.current, 'internal_dispatchMessage');
+      const uploadBase64FileWithProgress = vi.fn().mockResolvedValue({
+        filename: 'gemini.png',
+        id: 'file-1',
+        url: 'https://example.com/gemini.png',
+      });
+
+      act(() => {
+        useFileStore.setState({ uploadBase64FileWithProgress } as any);
+      });
+
+      const streamSpy = vi
+        .spyOn(chatService, 'createAssistantMessageStream')
+        .mockImplementation(async ({ onMessageHandle, onFinish }) => {
+          await onMessageHandle?.({
+            type: 'content_part',
+            partType: 'image',
+            mimeType: 'image/png',
+            content: 'base64data',
+          } as any);
+          await onFinish?.('Answer', {} as any);
+        });
+
+      await act(async () => {
+        await result.current.internal_fetchAIChatMessage({
+          messages,
+          messageId: TEST_IDS.ASSISTANT_MESSAGE_ID,
+          model: 'gemini-3-pro-image-preview',
+          provider: 'google',
+        });
+      });
+
+      expect(uploadBase64FileWithProgress).toHaveBeenCalledWith('data:image/png;base64,base64data');
+      expect(dispatchSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: TEST_IDS.ASSISTANT_MESSAGE_ID,
+          type: 'updateMessage',
+          value: expect.objectContaining({
+            imageList: expect.arrayContaining([
+              expect.objectContaining({
+                url: 'data:image/png;base64,base64data',
+              }),
+            ]),
+          }),
+        }),
+      );
+
+      streamSpy.mockRestore();
+    });
+
+    it('should persist google thought signatures for reasoning, content and images', async () => {
+      const { result } = renderHook(() => useChatStore());
+      const messages = [createMockMessage({ role: 'user' })];
+      const uploadBase64FileWithProgress = vi.fn().mockResolvedValue({
+        filename: 'gemini.png',
+        id: 'file-1',
+        url: 'https://example.com/gemini.png',
+      });
+      const updateMessageSpy = vi.spyOn(messageService, 'updateMessage');
+
+      act(() => {
+        useFileStore.setState({ uploadBase64FileWithProgress } as any);
+      });
+
+      const streamSpy = vi
+        .spyOn(chatService, 'createAssistantMessageStream')
+        .mockImplementation(async ({ onMessageHandle, onFinish }) => {
+          await onMessageHandle?.({
+            type: 'reasoning_part',
+            partType: 'text',
+            content: 'Thinking...',
+            thoughtSignature: 'reasoning-signature',
+          } as any);
+          await onMessageHandle?.({
+            type: 'content_part',
+            partType: 'text',
+            content: 'Answer',
+            thoughtSignature: 'content-signature',
+          } as any);
+          await onMessageHandle?.({
+            type: 'content_part',
+            partType: 'image',
+            mimeType: 'image/png',
+            content: 'base64data',
+            thoughtSignature: 'image-signature',
+          } as any);
+          await onFinish?.('Answer', {} as any);
+        });
+
+      await act(async () => {
+        await result.current.internal_fetchAIChatMessage({
+          messages,
+          messageId: TEST_IDS.ASSISTANT_MESSAGE_ID,
+          model: 'gemini-3-pro-image-preview',
+          provider: 'google',
+        });
+      });
+
+      expect(updateMessageSpy).toHaveBeenCalledWith(
+        TEST_IDS.ASSISTANT_MESSAGE_ID,
+        expect.objectContaining({
+          content: 'Answer',
+          reasoning: expect.objectContaining({
+            content: 'Thinking...',
+            signature: 'reasoning-signature',
+          }),
+          metadata: expect.objectContaining({
+            google: {
+              contentThoughtSignature: 'content-signature',
+              imageThoughtSignatures: ['image-signature'],
+            },
           }),
         }),
       );

@@ -185,6 +185,7 @@ export interface LookupPricingUnit extends PricingUnitBase {
 export type PricingUnit = FixedPricingUnit | TieredPricingUnit | LookupPricingUnit;
 
 export interface Pricing {
+  approximatePricePerImage?: number;
   currency?: ModelPriceCurrency;
   units: PricingUnit[];
 }
@@ -237,6 +238,15 @@ export type ExtendParamsType =
   | 'textVerbosity'
   | 'thinking'
   | 'thinkingBudget'
+  | 'thinkingLevel'
+  | 'thinkingLevel2'
+  | 'thinkingLevel3'
+  | 'thinkingLevel4'
+  | 'thinkingLevel5'
+  | 'imageAspectRatio'
+  | 'imageAspectRatio2'
+  | 'imageResolution'
+  | 'imageResolution2'
   | 'urlContext';
 
 export interface AiModelSettings {

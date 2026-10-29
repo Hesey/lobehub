@@ -1,6 +1,6 @@
 import { MESSAGE_CANCEL_FLAT } from '@lobechat/const';
-import { ChatMessageError } from '@lobechat/types';
-import { FetchEventSourceInit } from '@lobechat/utils/client/fetchEventSource/index';
+import type { ChatMessageError } from '@lobechat/types';
+import type { FetchEventSourceInit } from '@lobechat/utils/client/fetchEventSource/index';
 import { fetchEventSource } from '@lobechat/utils/client/fetchEventSource/index';
 import { sleep } from '@lobechat/utils/sleep';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -229,6 +229,135 @@ describe('fetchSSE', () => {
         observationId: null,
         toolCalls: undefined,
         reasoning: { content: 'Hello World' },
+        traceId: null,
+        type: 'done',
+      });
+    });
+  });
+
+  describe('content_part and reasoning_part', () => {
+    it('should handle content_part event with text and accumulate output', async () => {
+      const mockOnMessageHandle = vi.fn();
+      const mockOnFinish = vi.fn();
+
+      (fetchEventSource as any).mockImplementationOnce(
+        async (url: string, options: FetchEventSourceInit) => {
+          options.onopen!({ clone: () => ({ ok: true, headers: new Headers() }) } as any);
+          options.onmessage!({
+            event: 'content_part',
+            data: JSON.stringify({ content: 'Hello', partType: 'text' }),
+          } as any);
+          options.onmessage!({
+            event: 'content_part',
+            data: JSON.stringify({ content: ' World', partType: 'text' }),
+          } as any);
+        },
+      );
+
+      await fetchSSE('/', {
+        onMessageHandle: mockOnMessageHandle,
+        onFinish: mockOnFinish,
+        responseAnimation: 'none',
+      });
+
+      expect(mockOnMessageHandle).toHaveBeenNthCalledWith(1, {
+        content: 'Hello',
+        mimeType: undefined,
+        partType: 'text',
+        thoughtSignature: undefined,
+        type: 'content_part',
+      });
+      expect(mockOnMessageHandle).toHaveBeenNthCalledWith(2, {
+        content: ' World',
+        mimeType: undefined,
+        partType: 'text',
+        thoughtSignature: undefined,
+        type: 'content_part',
+      });
+
+      // Verify output is accumulated correctly
+      expect(mockOnFinish).toHaveBeenCalledWith('Hello World', {
+        observationId: null,
+        toolCalls: undefined,
+        traceId: null,
+        type: 'done',
+      });
+    });
+
+    it('should handle reasoning_part event with text and accumulate thinking', async () => {
+      const mockOnMessageHandle = vi.fn();
+      const mockOnFinish = vi.fn();
+
+      (fetchEventSource as any).mockImplementationOnce(
+        async (url: string, options: FetchEventSourceInit) => {
+          options.onopen!({ clone: () => ({ ok: true, headers: new Headers() }) } as any);
+          options.onmessage!({
+            event: 'reasoning_part',
+            data: JSON.stringify({ content: 'Thinking:', partType: 'text' }),
+          } as any);
+          options.onmessage!({
+            event: 'reasoning_part',
+            data: JSON.stringify({ content: ' step 1', partType: 'text' }),
+          } as any);
+          options.onmessage!({
+            event: 'content_part',
+            data: JSON.stringify({ content: 'Final answer', partType: 'text' }),
+          } as any);
+        },
+      );
+
+      await fetchSSE('/', {
+        onMessageHandle: mockOnMessageHandle,
+        onFinish: mockOnFinish,
+        responseAnimation: 'none',
+      });
+
+      // Verify reasoning is accumulated correctly
+      expect(mockOnFinish).toHaveBeenCalledWith('Final answer', {
+        observationId: null,
+        reasoning: { content: 'Thinking: step 1' },
+        toolCalls: undefined,
+        traceId: null,
+        type: 'done',
+      });
+    });
+
+    it('should not accumulate output for non-text content_part (e.g., image)', async () => {
+      const mockOnMessageHandle = vi.fn();
+      const mockOnFinish = vi.fn();
+
+      (fetchEventSource as any).mockImplementationOnce(
+        async (url: string, options: FetchEventSourceInit) => {
+          options.onopen!({ clone: () => ({ ok: true, headers: new Headers() }) } as any);
+          options.onmessage!({
+            event: 'content_part',
+            data: JSON.stringify({
+              content: 'base64imagedata',
+              partType: 'image',
+              mimeType: 'image/png',
+            }),
+          } as any);
+        },
+      );
+
+      await fetchSSE('/', {
+        onMessageHandle: mockOnMessageHandle,
+        onFinish: mockOnFinish,
+        responseAnimation: 'none',
+      });
+
+      expect(mockOnMessageHandle).toHaveBeenCalledWith({
+        content: 'base64imagedata',
+        mimeType: 'image/png',
+        partType: 'image',
+        thoughtSignature: undefined,
+        type: 'content_part',
+      });
+
+      // Output should be empty since image content is not accumulated
+      expect(mockOnFinish).toHaveBeenCalledWith('', {
+        observationId: null,
+        toolCalls: undefined,
         traceId: null,
         type: 'done',
       });

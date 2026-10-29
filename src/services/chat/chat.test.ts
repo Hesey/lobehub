@@ -280,6 +280,102 @@ describe('ChatService', () => {
           undefined,
         );
       });
+
+      it('should map thinkingLevel and urlContext extend params for Gemini models', async () => {
+        const getChatCompletionSpy = vi.spyOn(chatService, 'getChatCompletion');
+        const messages = [{ content: 'Test thinking level', role: 'user' }] as UIChatMessage[];
+
+        vi.spyOn(aiModelSelectors, 'isModelHasExtendParams').mockReturnValue(() => true);
+        vi.spyOn(aiModelSelectors, 'modelExtendParams').mockReturnValue(() => [
+          'thinkingLevel3',
+          'urlContext',
+        ]);
+
+        vi.spyOn(agentChatConfigSelectors, 'currentChatConfig').mockReturnValue({
+          searchMode: 'off',
+          thinkingLevel3: 'medium',
+          urlContext: true,
+        } as any);
+
+        await chatService.createAssistantMessage({
+          messages,
+          model: 'gemini-3.1-pro-preview',
+          provider: 'google',
+          plugins: [],
+        });
+
+        expect(getChatCompletionSpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            thinkingLevel: 'medium',
+            urlContext: true,
+          }),
+          undefined,
+        );
+      });
+
+      it('should map thinkingLevel5 for Gemini 3.1 Flash-Lite Preview', async () => {
+        const getChatCompletionSpy = vi.spyOn(chatService, 'getChatCompletion');
+        const messages = [{ content: 'Test thinking level 5', role: 'user' }] as UIChatMessage[];
+
+        vi.spyOn(aiModelSelectors, 'isModelHasExtendParams').mockReturnValue(() => true);
+        vi.spyOn(aiModelSelectors, 'modelExtendParams').mockReturnValue(() => [
+          'thinkingLevel5',
+          'urlContext',
+        ]);
+
+        vi.spyOn(agentChatConfigSelectors, 'currentChatConfig').mockReturnValue({
+          searchMode: 'off',
+          thinkingLevel5: 'low',
+          urlContext: true,
+        } as any);
+
+        await chatService.createAssistantMessage({
+          messages,
+          model: 'gemini-3.1-flash-lite-preview',
+          provider: 'google',
+          plugins: [],
+        });
+
+        expect(getChatCompletionSpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            thinkingLevel: 'low',
+            urlContext: true,
+          }),
+          undefined,
+        );
+      });
+
+      it('should map image aspect ratio and resolution variants for Gemini image models', async () => {
+        const getChatCompletionSpy = vi.spyOn(chatService, 'getChatCompletion');
+        const messages = [{ content: 'Test image params', role: 'user' }] as UIChatMessage[];
+
+        vi.spyOn(aiModelSelectors, 'isModelHasExtendParams').mockReturnValue(() => true);
+        vi.spyOn(aiModelSelectors, 'modelExtendParams').mockReturnValue(() => [
+          'imageAspectRatio2',
+          'imageResolution2',
+        ]);
+
+        vi.spyOn(agentChatConfigSelectors, 'currentChatConfig').mockReturnValue({
+          imageAspectRatio2: '1:4',
+          imageResolution2: '2K',
+          searchMode: 'off',
+        } as any);
+
+        await chatService.createAssistantMessage({
+          messages,
+          model: 'gemini-3.1-flash-image-preview',
+          provider: 'google',
+          plugins: [],
+        });
+
+        expect(getChatCompletionSpy).toHaveBeenCalledWith(
+          expect.objectContaining({
+            imageAspectRatio: '1:4',
+            imageResolution: '2K',
+          }),
+          undefined,
+        );
+      });
     });
 
     describe('should handle content correctly for vision models', () => {
@@ -1390,6 +1486,102 @@ describe('ChatService private methods', () => {
       expect(getChatCompletionSpy).toHaveBeenCalledWith(
         expect.objectContaining({
           thinkingBudget: 5000,
+        }),
+        undefined,
+      );
+    });
+
+    it('should map thinkingLevel and urlContext extend params for Gemini models', async () => {
+      const getChatCompletionSpy = vi.spyOn(chatService, 'getChatCompletion');
+      const messages = [{ content: 'Test thinking level', role: 'user' }] as UIChatMessage[];
+
+      vi.spyOn(aiModelSelectors, 'isModelHasExtendParams').mockReturnValue(() => true);
+      vi.spyOn(aiModelSelectors, 'modelExtendParams').mockReturnValue(() => [
+        'thinkingLevel3',
+        'urlContext',
+      ]);
+
+      vi.spyOn(agentChatConfigSelectors, 'currentChatConfig').mockReturnValue({
+        searchMode: 'off',
+        thinkingLevel3: 'medium',
+        urlContext: true,
+      } as any);
+
+      await chatService.createAssistantMessage({
+        messages,
+        model: 'gemini-3.1-pro-preview',
+        provider: 'google',
+        plugins: [],
+      });
+
+      expect(getChatCompletionSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          thinkingLevel: 'medium',
+          urlContext: true,
+        }),
+        undefined,
+      );
+    });
+
+    it('should map thinkingLevel5 for Gemini 3.1 Flash-Lite Preview', async () => {
+      const getChatCompletionSpy = vi.spyOn(chatService, 'getChatCompletion');
+      const messages = [{ content: 'Test thinking level 5', role: 'user' }] as UIChatMessage[];
+
+      vi.spyOn(aiModelSelectors, 'isModelHasExtendParams').mockReturnValue(() => true);
+      vi.spyOn(aiModelSelectors, 'modelExtendParams').mockReturnValue(() => [
+        'thinkingLevel5',
+        'urlContext',
+      ]);
+
+      vi.spyOn(agentChatConfigSelectors, 'currentChatConfig').mockReturnValue({
+        searchMode: 'off',
+        thinkingLevel5: 'low',
+        urlContext: true,
+      } as any);
+
+      await chatService.createAssistantMessage({
+        messages,
+        model: 'gemini-3.1-flash-lite-preview',
+        provider: 'google',
+        plugins: [],
+      });
+
+      expect(getChatCompletionSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          thinkingLevel: 'low',
+          urlContext: true,
+        }),
+        undefined,
+      );
+    });
+
+    it('should map image aspect ratio and resolution variants for Gemini image models', async () => {
+      const getChatCompletionSpy = vi.spyOn(chatService, 'getChatCompletion');
+      const messages = [{ content: 'Test image params', role: 'user' }] as UIChatMessage[];
+
+      vi.spyOn(aiModelSelectors, 'isModelHasExtendParams').mockReturnValue(() => true);
+      vi.spyOn(aiModelSelectors, 'modelExtendParams').mockReturnValue(() => [
+        'imageAspectRatio2',
+        'imageResolution2',
+      ]);
+
+      vi.spyOn(agentChatConfigSelectors, 'currentChatConfig').mockReturnValue({
+        imageAspectRatio2: '1:4',
+        imageResolution2: '2K',
+        searchMode: 'off',
+      } as any);
+
+      await chatService.createAssistantMessage({
+        messages,
+        model: 'gemini-3.1-flash-image-preview',
+        provider: 'google',
+        plugins: [],
+      });
+
+      expect(getChatCompletionSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          imageAspectRatio: '1:4',
+          imageResolution: '2K',
         }),
         undefined,
       );

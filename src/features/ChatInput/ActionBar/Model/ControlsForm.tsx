@@ -12,10 +12,19 @@ import { aiModelSelectors, useAiInfraStore } from '@/store/aiInfra';
 
 import ContextCachingSwitch from './ContextCachingSwitch';
 import GPT5ReasoningEffortSlider from './GPT5ReasoningEffortSlider';
+import ImageAspectRatio2Select from './ImageAspectRatio2Select';
+import ImageAspectRatioSelect from './ImageAspectRatioSelect';
+import ImageResolution2Slider from './ImageResolution2Slider';
+import ImageResolutionSlider from './ImageResolutionSlider';
 import ReasoningEffortSlider from './ReasoningEffortSlider';
 import ReasoningTokenSlider from './ReasoningTokenSlider';
 import TextVerbositySlider from './TextVerbositySlider';
 import ThinkingBudgetSlider from './ThinkingBudgetSlider';
+import ThinkingLevel2Slider from './ThinkingLevel2Slider';
+import ThinkingLevel3Slider from './ThinkingLevel3Slider';
+import ThinkingLevel4Slider from './ThinkingLevel4Slider';
+import ThinkingLevel5Slider from './ThinkingLevel5Slider';
+import ThinkingLevelSlider from './ThinkingLevelSlider';
 import ThinkingSlider from './ThinkingSlider';
 
 const ControlsForm = memo(() => {
@@ -161,6 +170,96 @@ const ControlsForm = memo(() => {
       layout: 'horizontal',
       minWidth: undefined,
       name: 'thinking',
+      style: {
+        paddingBottom: 0,
+      },
+    },
+    {
+      children: <ThinkingLevelSlider />,
+      label: t('extendParams.thinkingLevel.title'),
+      layout: 'horizontal',
+      minWidth: undefined,
+      name: 'thinkingLevel',
+      style: {
+        paddingBottom: 0,
+      },
+    },
+    {
+      children: <ThinkingLevel2Slider />,
+      label: t('extendParams.thinkingLevel.title'),
+      layout: 'horizontal',
+      minWidth: undefined,
+      name: 'thinkingLevel2',
+      style: {
+        paddingBottom: 0,
+      },
+    },
+    {
+      children: <ThinkingLevel3Slider />,
+      label: t('extendParams.thinkingLevel.title'),
+      layout: 'horizontal',
+      minWidth: undefined,
+      name: 'thinkingLevel3',
+      style: {
+        paddingBottom: 0,
+      },
+    },
+    {
+      children: <ThinkingLevel4Slider />,
+      label: t('extendParams.thinkingLevel.title'),
+      layout: 'horizontal',
+      minWidth: undefined,
+      name: 'thinkingLevel4',
+      style: {
+        paddingBottom: 0,
+      },
+    },
+    {
+      children: <ThinkingLevel5Slider />,
+      label: t('extendParams.thinkingLevel.title'),
+      layout: 'horizontal',
+      minWidth: undefined,
+      name: 'thinkingLevel5',
+      style: {
+        paddingBottom: 0,
+      },
+    },
+    {
+      children: <ImageAspectRatioSelect />,
+      label: t('extendParams.imageAspectRatio.title'),
+      layout: 'horizontal',
+      minWidth: undefined,
+      name: 'imageAspectRatio',
+      style: {
+        paddingBottom: 0,
+      },
+    },
+    {
+      children: <ImageAspectRatio2Select />,
+      label: t('extendParams.imageAspectRatio.title'),
+      layout: 'horizontal',
+      minWidth: undefined,
+      name: 'imageAspectRatio2',
+      style: {
+        paddingBottom: 0,
+      },
+    },
+    {
+      children: <ImageResolutionSlider />,
+      label: t('extendParams.imageResolution.title'),
+      layout: 'horizontal',
+      minWidth: undefined,
+      name: 'imageResolution',
+      style: {
+        paddingBottom: 0,
+      },
+    },
+    {
+      children: <ImageResolution2Slider />,
+      label: t('extendParams.imageResolution.title'),
+      layout: 'horizontal',
+      minWidth: undefined,
+      name: 'imageResolution2',
       style: {
         paddingBottom: 0,
       },

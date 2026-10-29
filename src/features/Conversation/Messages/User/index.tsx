@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import { Flexbox } from 'react-layout-kit';
 
 import Avatar from '@/features/ChatItem/components/Avatar';
-import BorderSpacing from '@/features/ChatItem/components/BorderSpacing';
 import MessageContent from '@/features/ChatItem/components/MessageContent';
 import Title from '@/features/ChatItem/components/Title';
 import { useStyles } from '@/features/ChatItem/style';
@@ -180,7 +179,6 @@ const UserMessage = memo<UserMessageProps>((props) => {
         </Flexbox>
         <UserBelowMessage content={content} id={id} ragQuery={ragQuery} />
       </Flexbox>
-      {mobile && variant === 'bubble' && <BorderSpacing borderSpacing={32} />}
     </Flexbox>
   );
 });

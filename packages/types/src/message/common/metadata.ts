@@ -64,4 +64,9 @@ export interface ModelPerformance {
   latency?: number;
 }
 
-export interface MessageMetadata extends ModelUsage, ModelPerformance {}
+export interface MessageMetadata extends ModelUsage, ModelPerformance {
+  google?: {
+    contentThoughtSignature?: string;
+    imageThoughtSignatures?: Array<string | undefined>;
+  };
+}

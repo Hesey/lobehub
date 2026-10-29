@@ -21,6 +21,7 @@ interface UserMessageContentPartThinking {
   type: 'thinking';
 }
 interface UserMessageContentPartText {
+  signature?: string;
   text: string;
   type: 'text';
 }
@@ -30,10 +31,12 @@ interface UserMessageContentPartImage {
     detail?: 'auto' | 'low' | 'high';
     url: string;
   };
+  signature?: string;
   type: 'image_url';
 }
 
 interface UserMessageContentPartVideo {
+  signature?: string;
   type: 'video_url';
   video_url: { url: string };
 }
@@ -124,6 +127,7 @@ export interface ChatStreamPayload {
     type: 'enabled' | 'disabled';
   };
   thinkingBudget?: number;
+  thinkingLevel?: 'minimal' | 'low' | 'medium' | 'high';
   tool_choice?: string;
   tools?: ChatCompletionTool[];
   /**
@@ -132,6 +136,8 @@ export interface ChatStreamPayload {
    */
   top_p?: number;
   truncation?: 'auto' | 'disabled';
+  imageAspectRatio?: string;
+  imageResolution?: string;
   /**
    * @title Gemini URL 上下文获取工具开关
    */
@@ -198,12 +204,29 @@ export interface OnFinishData {
 }
 
 export interface ChatStreamCallbacks {
+  onBase64Image?: (data: {
+    image: { data: string; id: string };
+    images: Array<{ data: string; id: string }>;
+  }) => Promise<void> | void;
   onCompletion?: (data: OnFinishData) => Promise<void> | void;
+  onContentPart?: (data: {
+    content: string;
+    mimeType?: string;
+    partType: 'text' | 'image';
+    thoughtSignature?: string;
+  }) => Promise<void> | void;
+  onError?: (error: any) => Promise<void> | void;
   /**
    * `onFinal`: Called once when the stream is closed with the final completion message.
    **/
   onFinal?: (data: OnFinishData) => Promise<void> | void;
   onGrounding?: (grounding: any) => Promise<void> | void;
+  onReasoningPart?: (data: {
+    content: string;
+    mimeType?: string;
+    partType: 'text' | 'image';
+    thoughtSignature?: string;
+  }) => Promise<void> | void;
   /** `onStart`: Called once when the stream is initialized. */
   onStart?: () => Promise<void> | void;
   /** `onText`: Called for each text chunk. */

@@ -252,6 +252,48 @@ describe('contextEngineering', () => {
     ]);
   });
 
+  it('should preserve google thought signatures for assistant content and images', async () => {
+    vi.spyOn(helpers, 'isCanUseVision').mockReturnValue(true);
+
+    const messages = [
+      {
+        role: 'assistant',
+        content: 'Structured reply',
+        metadata: {
+          google: {
+            contentThoughtSignature: 'content-signature',
+            imageThoughtSignatures: ['image-signature'],
+          },
+        },
+        imageList: [{ id: 'img1', url: 'http://example.com/image.png', alt: 'test.png' }],
+      },
+    ] as UIChatMessage[];
+
+    const result = await contextEngineering({
+      messages,
+      model: 'gemini-3-flash-preview',
+      provider: 'google',
+    });
+
+    expect(result).toEqual([
+      {
+        content: [
+          {
+            signature: 'content-signature',
+            text: 'Structured reply',
+            type: 'text',
+          },
+          {
+            image_url: { detail: 'auto', url: 'http://example.com/image.png' },
+            signature: 'image-signature',
+            type: 'image_url',
+          },
+        ],
+        role: 'assistant',
+      },
+    ]);
+  });
+
   it('should inject INBOX_GUIDE_SYSTEM_ROLE for welcome questions in inbox session', async () => {
     // Don't mock INBOX_GUIDE_SYSTEMROLE, use the real one
     const messages: UIChatMessage[] = [

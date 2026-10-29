@@ -1,8 +1,8 @@
-import { Content, GenerateContentConfig, GoogleGenAI, Part } from '@google/genai';
-import { imageUrlToBase64 } from '@lobechat/utils';
+import type { Content, GenerateContentConfig, GoogleGenAI, Part } from '@google/genai';
+import { imageUrlToBase64, inferContentTypeFromImageUrl } from '@lobechat/utils';
 
 import { convertGoogleAIUsage } from '../../core/usageConverters/google-ai';
-import { CreateImagePayload, CreateImageResponse } from '../../types/image';
+import type { CreateImagePayload, CreateImageResponse } from '../../types/image';
 import { AgentRuntimeError } from '../../utils/createError';
 import { getModelPricing } from '../../utils/getModelPricing';
 import { parseGoogleErrorMessage } from '../../utils/googleErrorParser';
@@ -10,6 +10,20 @@ import { parseDataUri } from '../../utils/uriParser';
 
 // Maximum number of images allowed for processing
 const MAX_IMAGE_COUNT = 10;
+
+const resolveGoogleImageMimeType = (imageUrl: string, mimeType: string | null): string => {
+  const normalizedMimeType = mimeType?.trim() || null;
+
+  if (normalizedMimeType && normalizedMimeType !== 'application/octet-stream') {
+    return normalizedMimeType;
+  }
+
+  try {
+    return inferContentTypeFromImageUrl(imageUrl);
+  } catch {
+    return normalizedMimeType || 'application/octet-stream';
+  }
+};
 
 /**
  * Process a single image URL and convert it to Google AI Part format
@@ -34,7 +48,7 @@ async function processImageForParts(imageUrl: string): Promise<Part> {
     return {
       inlineData: {
         data: urlBase64,
-        mimeType: urlMimeType,
+        mimeType: resolveGoogleImageMimeType(imageUrl, urlMimeType),
       },
     };
   } else {
@@ -47,7 +61,11 @@ async function processImageForParts(imageUrl: string): Promise<Part> {
  */
 function extractImageFromResponse(response: any): CreateImageResponse {
   const candidate = response.candidates?.[0];
+  if (candidate?.finishReason === 'NO_IMAGE') {
+    throw new Error('No image generated');
+  }
   if (!candidate?.content?.parts) {
+    // Handle cases where Google returns 200 but omits image parts (often moderation)
     throw new Error('No image generated');
   }
 
@@ -58,6 +76,7 @@ function extractImageFromResponse(response: any): CreateImageResponse {
     }
   }
 
+  // Fallback when no inlineData is present (commonly moderation or policy blocks)
   throw new Error('No image data found in response');
 }
 
@@ -79,16 +98,11 @@ async function generateByImageModel(
     prompt: params.prompt,
   });
 
-  if (!response.generatedImages || response.generatedImages.length === 0) {
-    throw new Error('No images generated');
+  const imageBytes = response.generatedImages?.[0]?.image?.imageBytes;
+  if (!imageBytes) {
+    throw new Error('No image generated');
   }
 
-  const generatedImage = response.generatedImages[0];
-  if (!generatedImage.image || !generatedImage.image.imageBytes) {
-    throw new Error('Invalid image data');
-  }
-
-  const { imageBytes } = generatedImage.image;
   // 1. official doc use png as example
   // 2. no responseType param support like openai now.
   // I think we can just hard code png now
@@ -147,6 +161,7 @@ async function generateImageByChatModel(
       ? {
           imageConfig: {
             aspectRatio: params.aspectRatio,
+            imageSize: params.resolution,
           },
         }
       : {}),
@@ -187,6 +202,10 @@ export async function createGoogleImage(
     return await generateByImageModel(client, payload);
   } catch (error) {
     const err = error as Error;
+
+    if ((err as any)?.errorType) {
+      throw err;
+    }
 
     const { errorType, error: parsedError } = parseGoogleErrorMessage(err.message);
     throw AgentRuntimeError.createImage({

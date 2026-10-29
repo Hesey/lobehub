@@ -5,6 +5,7 @@ import { knowledgeBaseQAPrompts } from '@lobechat/prompts';
 import {
   ChatImageItem,
   CreateMessageParams,
+  MessageMetadata,
   MessageSemanticSearchChunk,
   SendMessageParams,
   TraceEventType,
@@ -574,10 +575,39 @@ export const generateAIChat: StateCreator<
     let msgTraceId: string | undefined;
     let output = '';
     let thinking = '';
+    let contentThoughtSignature: string | undefined;
+    let reasoningThoughtSignature: string | undefined;
     let thinkingStartAt: number;
     let duration: number;
     // to upload image
-    const uploadTasks: Map<string, Promise<{ id?: string; url?: string }>> = new Map();
+    const uploadTasks: Map<
+      string,
+      Promise<{ alt?: string; id?: string; thoughtSignature?: string; url?: string }>
+    > = new Map();
+    let streamingImages: ChatImageItem[] = [];
+    const appendStreamingImage = (data: string, id: string, thoughtSignature?: string) => {
+      const image = { alt: id, id, thoughtSignature, url: data };
+      streamingImages = [...streamingImages, image];
+
+      internal_dispatchMessage({
+        id: messageId,
+        type: 'updateMessage',
+        value: {
+          imageList: streamingImages,
+        },
+      });
+
+      const task = getFileStoreState()
+        .uploadBase64FileWithProgress(data)
+        .then((value) => ({
+          id: value?.id,
+          url: value?.url,
+          alt: value?.filename || value?.id,
+          thoughtSignature,
+        }));
+
+      uploadTasks.set(id, task);
+    };
 
     const historySummary = chatConfig.enableCompressHistory
       ? topicSelectors.currentActiveTopicSummary(get())
@@ -631,6 +661,21 @@ export const generateAIChat: StateCreator<
           }
         }
 
+        const metadata: MessageMetadata | undefined =
+          speed || usage || contentThoughtSignature || finalImages.some((image) => !!image.thoughtSignature)
+            ? {
+                ...(speed ? speed : {}),
+                ...(usage ? usage : {}),
+                ...((contentThoughtSignature ||
+                  finalImages.some((image) => !!image.thoughtSignature)) && {
+                  google: {
+                    ...(contentThoughtSignature && { contentThoughtSignature }),
+                    imageThoughtSignatures: finalImages.map((image) => image.thoughtSignature),
+                  },
+                }),
+              }
+            : undefined;
+
         let parsedToolCalls = toolCalls;
         if (parsedToolCalls && parsedToolCalls.length > 0) {
           internal_toggleToolCallingStreaming(messageId, undefined);
@@ -647,10 +692,18 @@ export const generateAIChat: StateCreator<
         // update the content after fetch result
         await internal_updateMessageContent(messageId, content, {
           toolCalls: parsedToolCalls,
-          reasoning: !!reasoning ? { ...reasoning, duration } : undefined,
+          reasoning:
+            !!reasoning || reasoningThoughtSignature
+              ? {
+                  ...reasoning,
+                  ...(thinking ? { content: thinking } : {}),
+                  duration,
+                  signature: reasoning?.signature || reasoningThoughtSignature,
+                }
+              : undefined,
           search: !!grounding?.citations ? grounding : undefined,
           imageList: finalImages.length > 0 ? finalImages : undefined,
-          metadata: speed ? { ...usage, ...speed } : usage,
+          metadata,
         });
       },
       onMessageHandle: async (chunk) => {
@@ -678,11 +731,12 @@ export const generateAIChat: StateCreator<
           }
 
           case 'base64_image': {
+            streamingImages = chunk.images.map((i) => ({ id: i.id, url: i.data, alt: i.id }));
             internal_dispatchMessage({
               id: messageId,
               type: 'updateMessage',
               value: {
-                imageList: chunk.images.map((i) => ({ id: i.id, url: i.data, alt: i.id })),
+                imageList: streamingImages,
               },
             });
             const image = chunk.image;
@@ -697,6 +751,46 @@ export const generateAIChat: StateCreator<
 
             uploadTasks.set(image.id, task);
 
+            break;
+          }
+
+          case 'content_part': {
+            if (chunk.partType === 'image' && chunk.mimeType) {
+              const imageId = `${messageId}_content_part_${uploadTasks.size}`;
+              appendStreamingImage(
+                `data:${chunk.mimeType};base64,${chunk.content}`,
+                imageId,
+                chunk.thoughtSignature,
+              );
+              break;
+            }
+
+            if (chunk.thoughtSignature) {
+              contentThoughtSignature = chunk.thoughtSignature;
+            }
+            output += chunk.content;
+
+            if (!duration) {
+              duration = Date.now() - thinkingStartAt;
+
+              const isInChatReasoning = chatSelectors.isMessageInChatReasoning(messageId)(get());
+              if (isInChatReasoning) {
+                internal_toggleChatReasoning(
+                  false,
+                  messageId,
+                  n('toggleChatReasoning/false') as string,
+                );
+              }
+            }
+
+            internal_dispatchMessage({
+              id: messageId,
+              type: 'updateMessage',
+              value: {
+                content: output,
+                reasoning: !!thinking ? { content: thinking, duration } : undefined,
+              },
+            });
             break;
           }
 
@@ -724,6 +818,38 @@ export const generateAIChat: StateCreator<
                 content: output,
                 reasoning: !!thinking ? { content: thinking, duration } : undefined,
               },
+            });
+            break;
+          }
+
+          case 'reasoning_part': {
+            if (!thinkingStartAt) {
+              thinkingStartAt = Date.now();
+              internal_toggleChatReasoning(
+                true,
+                messageId,
+                n('toggleChatReasoning/true') as string,
+              );
+            }
+
+            if (chunk.partType === 'text') {
+              if (chunk.thoughtSignature) {
+                reasoningThoughtSignature = chunk.thoughtSignature;
+              }
+              thinking += chunk.content;
+            } else if (chunk.mimeType) {
+              const imageId = `${messageId}_reasoning_part_${uploadTasks.size}`;
+              appendStreamingImage(
+                `data:${chunk.mimeType};base64,${chunk.content}`,
+                imageId,
+                chunk.thoughtSignature,
+              );
+            }
+
+            internal_dispatchMessage({
+              id: messageId,
+              type: 'updateMessage',
+              value: { reasoning: { content: thinking } },
             });
             break;
           }

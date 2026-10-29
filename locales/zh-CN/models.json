@@ -1407,7 +1407,7 @@
     "description": "Gemini 1.5 Flash 001 是一款高效的多模态模型，支持广泛应用的扩展。"
   },
   "gemini-1.5-flash-002": {
-    "description": "Gemini 1.5 Flash 002 是一款高效的多模态模型，支持广泛应用的扩展。"
+    "description": "Gemini 1.5 Flash 002 是一款为广泛部署打造的高效多模态模型。"
   },
   "gemini-1.5-flash-8b": {
     "description": "Gemini 1.5 Flash 8B 是一款高效的多模态模型，支持广泛应用的扩展。"
@@ -1428,7 +1428,7 @@
     "description": "Gemini 1.5 Pro 001 是可扩展的多模态AI解决方案，支持广泛的复杂任务。"
   },
   "gemini-1.5-pro-002": {
-    "description": "Gemini 1.5 Pro 002 是最新的生产就绪模型，提供更高质量的输出，特别在数学、长上下文和视觉任务方面有显著提升。"
+    "description": "Gemini 1.5 Pro 002 是最新的生产就绪模型，具有更高质量的输出，尤其在数学、长上下文和视觉任务上表现更佳。"
   },
   "gemini-1.5-pro-exp-0801": {
     "description": "Gemini 1.5 Pro 0801 提供出色的多模态处理能力，为应用开发带来更大灵活性。"
@@ -1440,31 +1440,31 @@
     "description": "Gemini 1.5 Pro 支持高达200万个tokens，是中型多模态模型的理想选择，适用于复杂任务的多方面支持。"
   },
   "gemini-2.0-flash": {
-    "description": "Gemini 2.0 Flash 提供下一代功能和改进，包括卓越的速度、原生工具使用、多模态生成和1M令牌上下文窗口。"
+    "description": "Gemini 2.0 Flash 具备下一代能力，包括卓越的速度、原生工具使用、多模态生成和 1M token 上下文窗口。"
   },
   "gemini-2.0-flash-001": {
-    "description": "Gemini 2.0 Flash 提供下一代功能和改进，包括卓越的速度、原生工具使用、多模态生成和1M令牌上下文窗口。"
+    "description": "Gemini 2.0 Flash 具备下一代能力，包括卓越的速度、原生工具使用、多模态生成和 1M token 上下文窗口。"
   },
   "gemini-2.0-flash-exp": {
     "description": "Gemini 2.0 Flash 模型变体，针对成本效益和低延迟等目标进行了优化。"
   },
   "gemini-2.0-flash-exp-image-generation": {
-    "description": "Gemini 2.0 Flash 实验模型，支持图像生成"
+    "description": "Gemini 2.0 Flash 实验模型，支持图像生成。"
   },
   "gemini-2.0-flash-lite": {
-    "description": "Gemini 2.0 Flash 模型变体，针对成本效益和低延迟等目标进行了优化。"
+    "description": "Gemini 2.0 Flash 的一个变体，针对成本效率和低延迟进行了优化。"
   },
   "gemini-2.0-flash-lite-001": {
-    "description": "Gemini 2.0 Flash 模型变体，针对成本效益和低延迟等目标进行了优化。"
+    "description": "Gemini 2.0 Flash 的一个变体，针对成本效率和低延迟进行了优化。"
   },
   "gemini-2.0-flash-preview-image-generation": {
     "description": "Gemini 2.0 Flash 预览模型，支持图像生成"
   },
   "gemini-2.5-flash": {
-    "description": "Gemini 2.5 Flash 是 Google 性价比最高的模型，提供全面的功能。"
+    "description": "Gemini 2.5 Flash 是 Google 最具性价比且能力完整的模型。"
   },
   "gemini-2.5-flash-image": {
-    "description": "Nano Banana 是 Google 最新、最快、最高效的原生多模态模型，它允许您通过对话生成和编辑图像。"
+    "description": "Nano Banana 是 Google 最新、最快、最高效的原生多模态模型，支持对话式图像生成与编辑。"
   },
   "gemini-2.5-flash-image-preview": {
     "description": "Nano Banana 是 Google 最新、最快、最高效的原生多模态模型，它允许您通过对话生成和编辑图像。"
@@ -1473,10 +1473,10 @@
     "description": "Nano Banana 是 Google 最新、最快、最高效的原生多模态模型，它允许您通过对话生成和编辑图像。"
   },
   "gemini-2.5-flash-image:image": {
-    "description": "Nano Banana 是 Google 最新、最快、最高效的原生多模态模型，它允许您通过对话生成和编辑图像。"
+    "description": "Nano Banana 是 Google 最新、最快、最高效的原生多模态模型，支持对话式图像生成与编辑。"
   },
   "gemini-2.5-flash-lite": {
-    "description": "Gemini 2.5 Flash-Lite 是 Google 最小、性价比最高的模型，专为大规模使用而设计。"
+    "description": "Gemini 2.5 Flash-Lite 是 Google 体积最小、最具性价比的模型，专为大规模使用而设计。"
   },
   "gemini-2.5-flash-lite-preview-06-17": {
     "description": "Gemini 2.5 Flash-Lite Preview 是 Google 最小、性价比最高的模型，专为大规模使用而设计。"
@@ -1494,16 +1494,37 @@
     "description": "Preview release (Septempber 25th, 2025) of Gemini 2.5 Flash"
   },
   "gemini-2.5-pro": {
-    "description": "Gemini 2.5 Pro 是 Google 最先进的思维模型，能够对代码、数学和STEM领域的复杂问题进行推理，以及使用长上下文分析大型数据集、代码库和文档。"
+    "description": "Gemini 2.5 Pro 是 Google 最先进的推理模型，能够处理代码、数学和 STEM 问题，并在长上下文下分析大型数据集、代码库和文档。"
   },
   "gemini-2.5-pro-preview-03-25": {
     "description": "Gemini 2.5 Pro Preview 是 Google 最先进的思维模型，能够对代码、数学和STEM领域的复杂问题进行推理，以及使用长上下文分析大型数据集、代码库和文档。"
   },
   "gemini-2.5-pro-preview-05-06": {
-    "description": "Gemini 2.5 Pro Preview 是 Google 最先进的思维模型，能够对代码、数学和STEM领域的复杂问题进行推理，以及使用长上下文分析大型数据集、代码库和文档。"
+    "description": "Gemini 2.5 Pro Preview 是 Google 最先进的推理模型，能够处理代码、数学和 STEM 问题，并在长上下文下分析大型数据集、代码库和文档。"
   },
   "gemini-2.5-pro-preview-06-05": {
-    "description": "Gemini 2.5 Pro Preview 是 Google 最先进的思维模型，能够对代码、数学和STEM领域的复杂问题进行推理，以及使用长上下文分析大型数据集、代码库和文档。"
+    "description": "Gemini 2.5 Pro Preview 是 Google 最先进的推理模型，能够处理代码、数学和 STEM 问题，并在长上下文下分析大型数据集、代码库和文档。"
+  },
+  "gemini-3-flash-preview": {
+    "description": "Gemini 3 Flash 是为速度打造的最智能模型，将前沿智能与出色的搜索 grounding 能力结合在一起。"
+  },
+  "gemini-3-pro-image-preview": {
+    "description": "Gemini 3 Pro Image（Nano Banana Pro）是 Google 的图像生成模型，同时也支持多模态聊天。"
+  },
+  "gemini-3-pro-image-preview:image": {
+    "description": "Gemini 3 Pro Image（Nano Banana Pro）是 Google 的图像生成模型，同时也支持多模态聊天。"
+  },
+  "gemini-3.1-flash-image-preview": {
+    "description": "Gemini 3.1 Flash Image（Nano Banana 2）是 Google 速度最快的原生图像生成模型，支持思考能力以及对话式图像生成和编辑。"
+  },
+  "gemini-3.1-flash-image-preview:image": {
+    "description": "Gemini 3.1 Flash Image（Nano Banana 2）是 Google 速度最快的原生图像生成模型，支持思考能力以及对话式图像生成和编辑。"
+  },
+  "gemini-3.1-flash-lite-preview": {
+    "description": "Gemini 3.1 Flash-Lite Preview 是 Google 最具性价比的多模态模型，针对高吞吐智能体任务、翻译和数据处理进行了优化。"
+  },
+  "gemini-3.1-pro-preview": {
+    "description": "Gemini 3.1 Pro Preview 在 Gemini 3 Pro 的基础上增强了推理能力，并新增中等思考级别支持。"
   },
   "gemini-flash-latest": {
     "description": "Latest release of Gemini Flash"

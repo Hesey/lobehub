@@ -13,7 +13,7 @@ import { createBedrockStream } from './common';
 export const AWSBedrockClaudeStream = (
   res: InvokeModelWithResponseStreamResponse | ReadableStream,
   cb?: ChatStreamCallbacks,
-): ReadableStream<string> => {
+): ReadableStream<Uint8Array> => {
   const streamStack: StreamContext = { id: 'chat_' + nanoid() };
 
   const stream = res instanceof ReadableStream ? res : createBedrockStream(res);

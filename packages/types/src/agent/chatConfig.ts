@@ -33,11 +33,32 @@ export interface LobeAgentChatConfig {
   reasoningEffort?: 'low' | 'medium' | 'high';
   gpt5ReasoningEffort?: 'minimal' | 'low' | 'medium' | 'high';
   /**
+   * 图片生成宽高比
+   */
+  imageAspectRatio?: string;
+  /**
+   * Nano Banana 2 额外支持的宽高比
+   */
+  imageAspectRatio2?: string;
+  /**
+   * 图片生成分辨率
+   */
+  imageResolution?: '1K' | '2K' | '4K';
+  /**
+   * 图片生成分辨率（含 512px）
+   */
+  imageResolution2?: '512px' | '1K' | '2K' | '4K';
+  /**
    * 输出文本详细程度控制
    */
   textVerbosity?: 'low' | 'medium' | 'high';
   thinking?: 'disabled' | 'auto' | 'enabled';
   thinkingBudget?: number;
+  thinkingLevel?: 'minimal' | 'low' | 'medium' | 'high';
+  thinkingLevel2?: 'low' | 'high';
+  thinkingLevel3?: 'low' | 'medium' | 'high';
+  thinkingLevel4?: 'minimal' | 'high';
+  thinkingLevel5?: 'minimal' | 'low' | 'medium' | 'high';
   /**
    * 禁用上下文缓存
    */
@@ -75,7 +96,13 @@ export const AgentChatConfigSchema = z.object({
   enableReasoningEffort: z.boolean().optional(),
   enableStreaming: z.boolean().optional(),
   historyCount: z.number().optional(),
+  imageAspectRatio: z.string().optional(),
+  imageAspectRatio2: z.string().optional(),
+  imageResolution: z.enum(['1K', '2K', '4K']).optional(),
+  imageResolution2: z.enum(['512px', '1K', '2K', '4K']).optional(),
+  disableContextCaching: z.boolean().optional(),
   reasoningBudgetToken: z.number().optional(),
+  reasoningEffort: z.enum(['low', 'medium', 'high']).optional(),
   searchFCModel: z
     .object({
       model: z.string(),
@@ -84,4 +111,13 @@ export const AgentChatConfigSchema = z.object({
     .optional(),
   searchMode: z.enum(['off', 'on', 'auto']).optional(),
   textVerbosity: z.enum(['low', 'medium', 'high']).optional(),
+  thinking: z.enum(['disabled', 'auto', 'enabled']).optional(),
+  thinkingBudget: z.number().optional(),
+  thinkingLevel: z.enum(['minimal', 'low', 'medium', 'high']).optional(),
+  thinkingLevel2: z.enum(['low', 'high']).optional(),
+  thinkingLevel3: z.enum(['low', 'medium', 'high']).optional(),
+  thinkingLevel4: z.enum(['minimal', 'high']).optional(),
+  thinkingLevel5: z.enum(['minimal', 'low', 'medium', 'high']).optional(),
+  urlContext: z.boolean().optional(),
+  useModelBuiltinSearch: z.boolean().optional(),
 });

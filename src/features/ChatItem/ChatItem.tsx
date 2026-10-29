@@ -6,7 +6,6 @@ import { Flexbox } from 'react-layout-kit';
 
 import Actions from './components/Actions';
 import Avatar from './components/Avatar';
-import BorderSpacing from './components/BorderSpacing';
 import ErrorContent from './components/ErrorContent';
 import MessageContent from './components/MessageContent';
 import Title from './components/Title';
@@ -151,9 +150,6 @@ const ChatItem = memo<ChatItemProps>(
           </Flexbox>
           {belowMessage}
         </Flexbox>
-        {mobile && variant === 'bubble' && showAvatar && (
-          <BorderSpacing borderSpacing={MOBILE_AVATAR_SIZE} />
-        )}
       </Flexbox>
     );
   },

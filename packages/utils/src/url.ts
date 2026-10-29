@@ -79,7 +79,19 @@ export const inferFileExtensionFromImageUrl = (url: string): string => {
   const extension = pathname.slice(Math.max(0, lastDotIndex + 1)).toLowerCase();
 
   // Validate against common image extensions
-  const validImageExtensions = ['webp', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'tiff', 'tif'];
+  const validImageExtensions = [
+    'webp',
+    'jpg',
+    'jpeg',
+    'png',
+    'gif',
+    'bmp',
+    'svg',
+    'tiff',
+    'tif',
+    'heic',
+    'heif',
+  ];
   if (validImageExtensions.includes(extension)) {
     return extension;
   }

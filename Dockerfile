@@ -45,6 +45,7 @@ ARG NEXT_PUBLIC_ANALYTICS_UMAMI
 ARG NEXT_PUBLIC_UMAMI_SCRIPT_URL
 ARG NEXT_PUBLIC_UMAMI_WEBSITE_ID
 ARG FEATURE_FLAGS
+ARG RUN_DOCKER_CHECKS="false"
 
 ENV NEXT_PUBLIC_BASE_PATH="${NEXT_PUBLIC_BASE_PATH}" \
     FEATURE_FLAGS="${FEATURE_FLAGS}"
@@ -72,9 +73,49 @@ WORKDIR /app
 
 COPY package.json pnpm-workspace.yaml ./
 COPY .npmrc ./
-COPY packages ./packages
 
-RUN \
+RUN mkdir -p \
+    packages/agent-runtime \
+    packages/const \
+    packages/context-engine \
+    packages/database \
+    packages/electron-client-ipc \
+    packages/electron-server-ipc \
+    packages/fetch-sse \
+    packages/file-loaders \
+    packages/memory-extract \
+    packages/model-bank \
+    packages/model-runtime \
+    packages/obervability-otel \
+    packages/prompts \
+    packages/python-interpreter \
+    packages/ssrf-safe-fetch \
+    packages/types \
+    packages/utils \
+    packages/web-crawler
+
+COPY packages/agent-runtime/package.json ./packages/agent-runtime/
+COPY packages/const/package.json ./packages/const/
+COPY packages/context-engine/package.json ./packages/context-engine/
+COPY packages/database/package.json ./packages/database/
+COPY packages/electron-client-ipc/package.json ./packages/electron-client-ipc/
+COPY packages/electron-server-ipc/package.json ./packages/electron-server-ipc/
+COPY packages/fetch-sse/package.json ./packages/fetch-sse/
+COPY packages/file-loaders/package.json ./packages/file-loaders/
+COPY packages/memory-extract/package.json ./packages/memory-extract/
+COPY packages/model-bank/package.json ./packages/model-bank/
+COPY packages/model-runtime/package.json ./packages/model-runtime/
+COPY packages/obervability-otel/package.json ./packages/obervability-otel/
+COPY packages/prompts/package.json ./packages/prompts/
+COPY packages/python-interpreter/package.json ./packages/python-interpreter/
+COPY packages/ssrf-safe-fetch/package.json ./packages/ssrf-safe-fetch/
+COPY packages/types/package.json ./packages/types/
+COPY packages/utils/package.json ./packages/utils/
+COPY packages/web-crawler/package.json ./packages/web-crawler/
+
+RUN --mount=type=cache,id=lobehub-corepack,target=/root/.cache/node/corepack \
+    --mount=type=cache,id=lobehub-npm,target=/root/.npm \
+    --mount=type=cache,id=lobehub-pnpm,target=/root/.local/share/pnpm/store \
     # If you want to build docker in China, build with --build-arg USE_CN_MIRROR=true
     if [ "${USE_CN_MIRROR:-false}" = "true" ]; then \
         export SENTRYCLI_CDNURL="https://npmmirror.com/mirrors/sentry-cli"; \
@@ -90,12 +131,16 @@ RUN \
     # Use pnpm for corepack
     && corepack use $(sed -n 's/.*"packageManager": "\(.*\)".*/\1/p' package.json) \
     # Install the dependencies
-    && pnpm i
+    && pnpm i --prefer-offline
 
 COPY . .
 
 # run build standalone for docker version
-RUN npm run build:docker
+RUN if [ "${RUN_DOCKER_CHECKS:-false}" = "true" ]; then \
+        npm run build:docker; \
+    else \
+        npm run build:docker:fast; \
+    fi
 
 ## Application image, copy all the files for production
 FROM busybox:latest AS app

@@ -143,6 +143,16 @@ describe('inferContentTypeFromImageUrl', () => {
     expect(result).toBe('image/svg+xml');
   });
 
+  it('should handle HEIC format', () => {
+    const result = inferContentTypeFromImageUrl('https://example.com/image.heic');
+    expect(result).toBe('image/heic');
+  });
+
+  it('should handle HEIF format', () => {
+    const result = inferContentTypeFromImageUrl('https://example.com/image.heif');
+    expect(result).toBe('image/heif');
+  });
+
   it('should throw error for invalid URLs', () => {
     expect(() => {
       inferContentTypeFromImageUrl('invalid-url');

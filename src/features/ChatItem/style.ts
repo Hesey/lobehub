@@ -112,7 +112,7 @@ export const useStyles = createStyles(
 
           ${responsive.mobile} {
             padding-block-start: ${variant === 'docs' ? '16px' : '12px'};
-            padding-inline: 8px;
+            padding-inline: 4px;
           }
         `,
       ),
@@ -185,6 +185,8 @@ export const useStyles = createStyles(
 
           ${responsive.mobile} {
             overflow-x: auto;
+            flex: 1;
+            min-width: 0;
           }
         `,
       ),

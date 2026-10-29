@@ -23,6 +23,7 @@ export type ChatResponseFormat =
     };
 
 interface UserMessageContentPartText {
+  signature?: string;
   text: string;
   type: 'text';
 }
@@ -31,10 +32,27 @@ interface UserMessageContentPartImage {
     detail?: 'auto' | 'low' | 'high';
     url: string;
   };
+  signature?: string;
   type: 'image_url';
 }
 
-export type UserMessageContentPart = UserMessageContentPartText | UserMessageContentPartImage;
+interface UserMessageContentPartVideo {
+  signature?: string;
+  type: 'video_url';
+  video_url: { url: string };
+}
+
+interface UserMessageContentPartThinking {
+  signature: string;
+  thinking: string;
+  type: 'thinking';
+}
+
+export type UserMessageContentPart =
+  | UserMessageContentPartText
+  | UserMessageContentPartImage
+  | UserMessageContentPartVideo
+  | UserMessageContentPartThinking;
 
 export interface OpenAIChatMessage {
   /**

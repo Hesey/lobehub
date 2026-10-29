@@ -7,6 +7,23 @@ import 'fake-indexeddb/auto';
 import React from 'react';
 import { vi } from 'vitest';
 
+const createStorageMock = () => {
+  const storage = new Map<string, string>();
+
+  return {
+    clear: () => storage.clear(),
+    getItem: (key: string) => storage.get(key) ?? null,
+    key: (index: number) => Array.from(storage.keys())[index] ?? null,
+    get length() {
+      return storage.size;
+    },
+    removeItem: (key: string) => {
+      storage.delete(key);
+    },
+    setItem: (key: string, value: string) => storage.set(key, String(value)),
+  };
+};
+
 // Global mock for @lobehub/analytics/react to avoid AnalyticsProvider dependency
 // This prevents tests from failing when components use useAnalytics hook
 vi.mock('@lobehub/analytics/react', () => ({
@@ -30,6 +47,23 @@ if (typeof window === 'undefined') {
 
 // remove antd hash on test
 theme.defaultConfig.hashed = false;
+
+// Bun + happy-dom can expose a broken localStorage object in some runs.
+if (typeof globalThis.localStorage?.getItem !== 'function') {
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    value: createStorageMock(),
+    writable: true,
+  });
+}
+
+if (typeof globalThis.sessionStorage?.getItem !== 'function') {
+  Object.defineProperty(globalThis, 'sessionStorage', {
+    configurable: true,
+    value: createStorageMock(),
+    writable: true,
+  });
+}
 
 // 将 React 设置为全局变量，这样就不需要在每个测试文件中导入它了
 (global as any).React = React;

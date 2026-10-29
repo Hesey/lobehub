@@ -8,13 +8,17 @@ import { CONVERSATION_MIN_WIDTH } from '@/const/layoutTokens';
 import { useGlobalStore } from '@/store/global';
 import { systemStatusSelectors } from '@/store/global/selectors';
 
-const useStyles = createStyles(({ css, token }) => ({
+const useStyles = createStyles(({ css, responsive, token }) => ({
   container: css`
     align-self: center;
 
     /* Leave some space for the minimap */
     padding-inline: 12px;
     transition: width 0.25s ${token.motionEaseInOut};
+
+    ${responsive.mobile} {
+      padding-inline: 4px;
+    }
   `,
 }));
 

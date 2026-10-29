@@ -10,7 +10,6 @@ import { Flexbox } from 'react-layout-kit';
 
 import { HtmlPreviewAction } from '@/components/HtmlPreview';
 import Avatar from '@/features/ChatItem/components/Avatar';
-import BorderSpacing from '@/features/ChatItem/components/BorderSpacing';
 import ErrorContent from '@/features/ChatItem/components/ErrorContent';
 import MessageContent from '@/features/ChatItem/components/MessageContent';
 import Title from '@/features/ChatItem/components/Title';
@@ -274,7 +273,6 @@ const AssistantMessage = memo<AssistantMessageProps>((props) => {
           )}
         </Flexbox>
       </Flexbox>
-      {mobile && <BorderSpacing borderSpacing={MOBILE_AVATAR_SIZE} />}
     </Flexbox>
   );
 });

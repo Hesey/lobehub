@@ -213,30 +213,64 @@ export class MessageContentProcessor extends BaseProcessor {
    * 处理助手消息内容
    */
   private async processAssistantMessage(message: any): Promise<any> {
+    const googleMetadata =
+      this.config.provider === 'google' || this.config.provider === 'vertexai'
+        ? message.metadata?.google
+        : undefined;
+    const contentThoughtSignature = googleMetadata?.contentThoughtSignature;
+    const imageThoughtSignatures = googleMetadata?.imageThoughtSignatures || [];
+
     // 检查是否有推理内容（thinking mode）
     const shouldIncludeThinking = message.reasoning && !!message.reasoning?.signature;
 
-    if (shouldIncludeThinking) {
+    // 检查是否有图片（助手消息也可能包含图片）
+    const hasImages = message.imageList && message.imageList.length > 0;
+    const hasContentThoughtSignature = !!contentThoughtSignature;
+    const hasImageThoughtSignature = imageThoughtSignatures.some(Boolean);
+    const shouldUseStructuredContent =
+      shouldIncludeThinking ||
+      hasContentThoughtSignature ||
+      (hasImages &&
+        (this.config.isCanUseVision?.(this.config.model, this.config.provider) ||
+          hasImageThoughtSignature));
+
+    if (shouldUseStructuredContent) {
       const contentParts: UserMessageContentPart[] = [
-        {
-          signature: message.reasoning!.signature,
-          thinking: message.reasoning!.content,
-          type: 'thinking',
-        },
-        {
-          text: message.content,
-          type: 'text',
-        },
+        ...(shouldIncludeThinking
+          ? [
+              {
+                signature: message.reasoning!.signature,
+                thinking: message.reasoning!.content,
+                type: 'thinking',
+              } satisfies UserMessageContentPart,
+            ]
+          : []),
+        ...(message.content || hasContentThoughtSignature
+          ? [
+              {
+                signature: contentThoughtSignature,
+                text: message.content,
+                type: 'text',
+              } satisfies UserMessageContentPart,
+            ]
+          : []),
       ];
+
+      if (hasImages && this.config.isCanUseVision?.(this.config.model, this.config.provider)) {
+        const imageContentParts = await this.processImageList(
+          (message.imageList || []).map((image: any, index: number) => ({
+            ...image,
+            thoughtSignature: imageThoughtSignatures[index],
+          })),
+        );
+        contentParts.push(...imageContentParts);
+      }
 
       return {
         ...message,
         content: contentParts,
       };
     }
-
-    // 检查是否有图片（助手消息也可能包含图片）
-    const hasImages = message.imageList && message.imageList.length > 0;
 
     if (hasImages && this.config.isCanUseVision?.(this.config.model, this.config.provider)) {
       // 创建结构化内容
@@ -286,6 +320,7 @@ export class MessageContentProcessor extends BaseProcessor {
 
         return {
           image_url: { detail: 'auto', url: processedUrl },
+          signature: image.thoughtSignature,
           type: 'image_url',
         } as UserMessageContentPart;
       }),
