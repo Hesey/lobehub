@@ -24,6 +24,7 @@ import ThinkingLevel2Slider from './ThinkingLevel2Slider';
 import ThinkingLevel3Slider from './ThinkingLevel3Slider';
 import ThinkingLevel4Slider from './ThinkingLevel4Slider';
 import ThinkingLevel5Slider from './ThinkingLevel5Slider';
+import ThinkingLevel6Slider from './ThinkingLevel6Slider';
 import ThinkingLevelSlider from './ThinkingLevelSlider';
 import ThinkingSlider from './ThinkingSlider';
 
@@ -195,7 +196,13 @@ const ControlsForm = memo(() => {
       },
     },
     {
-      children: <ThinkingLevel3Slider />,
+      children: (
+        <ThinkingLevel3Slider
+          defaultValue={
+            model === 'gemini-4-carbon' || model === 'gemini-4-argon' ? 'medium' : 'high'
+          }
+        />
+      ),
       label: t('extendParams.thinkingLevel.title'),
       layout: 'horizontal',
       minWidth: undefined,
@@ -220,6 +227,16 @@ const ControlsForm = memo(() => {
       layout: 'horizontal',
       minWidth: undefined,
       name: 'thinkingLevel5',
+      style: {
+        paddingBottom: 0,
+      },
+    },
+    {
+      children: <ThinkingLevel6Slider />,
+      label: t('extendParams.thinkingLevel.title'),
+      layout: 'horizontal',
+      minWidth: undefined,
+      name: 'thinkingLevel6',
       style: {
         paddingBottom: 0,
       },

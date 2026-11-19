@@ -9,6 +9,141 @@ import { type AIChatModelCard, type AIImageModelCard } from '../types';
 // Gemini metadata synced from lobehub/lobehub main @ 49204982cab98bfa2f2fb6831a34d5018a2af6be.
 // Keep older local models and the v1 module layout for compatibility.
 const googleChatModels: AIChatModelCard[] = [
+  // Carbon and Argon: upstream main @ 69f8dcdfae1c59a5ffb703b3a0187223987bcd56.
+  {
+    abilities: {
+      audio: true,
+      functionCall: true,
+      reasoning: true,
+      search: true,
+      structuredOutput: true,
+      video: true,
+      vision: true,
+    },
+    // Same unified 1M window as Argon: 64K output by default, up to 1M with long decode.
+    // https://ai.google.dev/gemini-api/docs/models/gemini-4-carbon
+    contextWindowTokens: 1_048_576,
+    description:
+      "Gemini 4 Carbon is Google's strongest model, with state-of-the-art cybersecurity and long-horizon capabilities for sustained agentic coding, multimodal knowledge work, and scientific reasoning.",
+    displayName: 'Gemini 4 Carbon',
+    enabled: true,
+    family: 'gemini',
+    generation: 'gemini-4',
+    id: 'gemini-4-carbon',
+    maxOutput: 65_536,
+    /** Introductory rates through 2026-11-30; they double afterward ($4 input, $0.20 cached input,
+     * $20 output). Explicit caching is not supported, so there is no cache-write price.
+     * @see https://ai.google.dev/gemini-api/docs/pricing
+     */
+    pricing: {
+      units: [
+        { name: 'textInput_cacheRead', rate: 0.1, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'textInput', rate: 2, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'imageInput', rate: 2, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'videoInput', rate: 2, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'audioInput', rate: 2, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'textOutput', rate: 10, strategy: 'fixed', unit: 'millionTokens' },
+      ],
+    },
+    releasedAt: '2026-11-10',
+    // Sampling parameters are ignored by the API.
+    // https://ai.google.dev/gemini-api/docs/latest-model
+    settings: {
+      disabledParams: ['temperature', 'top_p'],
+      extendParams: ['thinkingLevel3', 'urlContext'],
+      searchImpl: 'params',
+      searchProvider: 'google',
+    },
+    type: 'chat',
+  },
+  {
+    abilities: {
+      audio: true,
+      functionCall: true,
+      reasoning: true,
+      search: true,
+      structuredOutput: true,
+      video: true,
+      vision: true,
+    },
+    // Unified 1M window shared by input, thinking and output; a response defaults to 64K output
+    // and can go up to 1M with long decode.
+    // https://ai.google.dev/gemini-api/docs/models/gemini-4-argon
+    contextWindowTokens: 1_048_576,
+    description:
+      "Gemini 4 Argon is Google's flagship reasoning model, built for complex software engineering, deep math and science, autonomous multi-step agents, and long decode up to 1M tokens.",
+    displayName: 'Gemini 4 Argon',
+    enabled: true,
+    family: 'gemini',
+    generation: 'gemini-4',
+    id: 'gemini-4-argon',
+    knowledgeCutoff: '2026-03',
+    maxOutput: 65_536,
+    /** Introductory rates through 2026-11-30; they double afterward ($4 input, $0.20 cached input,
+     * $20 output). Explicit caching is not supported, so there is no cache-write price.
+     * @see https://ai.google.dev/gemini-api/docs/pricing
+     */
+    pricing: {
+      units: [
+        { name: 'textInput_cacheRead', rate: 0.1, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'textInput', rate: 2, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'imageInput', rate: 2, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'videoInput', rate: 2, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'audioInput', rate: 2, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'textOutput', rate: 10, strategy: 'fixed', unit: 'millionTokens' },
+      ],
+    },
+    releasedAt: '2026-10-13',
+    // Sampling parameters are ignored by the API.
+    // https://ai.google.dev/gemini-api/docs/latest-model
+    settings: {
+      disabledParams: ['temperature', 'top_p'],
+      extendParams: ['thinkingLevel3', 'urlContext'],
+      searchImpl: 'params',
+      searchProvider: 'google',
+    },
+    type: 'chat',
+  },
+  {
+    abilities: {
+      audio: true,
+      functionCall: true,
+      reasoning: true,
+      search: true,
+      structuredOutput: true,
+      video: true,
+      vision: true,
+    },
+    contextWindowTokens: 1_048_576,
+    description:
+      'Gemini 4 Hydrogen combines speed and efficiency for everyday coding and agentic workflows, with a unified 1M-token context window and configurable reasoning up to xhigh.',
+    displayName: 'Gemini 4 Hydrogen',
+    enabled: true,
+    family: 'gemini',
+    generation: 'gemini-4',
+    id: 'gemini-4-hydrogen',
+    maxOutput: 65_536,
+    // Standard paid-tier prices; implicit caching only, with no cache-write charge.
+    // https://ai.google.dev/gemini-api/docs/pricing#gemini-4-hydrogen
+    pricing: {
+      units: [
+        { name: 'textInput_cacheRead', rate: 0.075, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'textInput', rate: 1.5, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'imageInput', rate: 1.5, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'videoInput', rate: 1.5, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'audioInput', rate: 1.5, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'textOutput', rate: 7.5, strategy: 'fixed', unit: 'millionTokens' },
+      ],
+    },
+    // https://ai.google.dev/gemini-api/docs/whats-new-gemini-4-hydrogen
+    settings: {
+      disabledParams: ['temperature', 'top_p'],
+      extendParams: ['thinkingLevel6', 'urlContext'],
+      searchImpl: 'params',
+      searchProvider: 'google',
+    },
+    type: 'chat',
+  },
   {
     abilities: {
       audio: true,

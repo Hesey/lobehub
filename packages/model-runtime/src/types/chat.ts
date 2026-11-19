@@ -127,7 +127,7 @@ export interface ChatStreamPayload {
     type: 'enabled' | 'disabled';
   };
   thinkingBudget?: number;
-  thinkingLevel?: 'minimal' | 'low' | 'medium' | 'high';
+  thinkingLevel?: 'minimal' | 'low' | 'medium' | 'high' | 'xhigh';
   tool_choice?: string;
   tools?: ChatCompletionTool[];
   /**

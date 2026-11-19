@@ -216,6 +216,10 @@ class ChatService {
         extendParams.thinkingLevel = chatConfig.thinkingLevel5;
       }
 
+      if (modelExtendParams!.includes('thinkingLevel6')) {
+        extendParams.thinkingLevel = chatConfig.thinkingLevel6 ?? 'high';
+      }
+
       if (modelExtendParams!.includes('imageAspectRatio') && chatConfig.imageAspectRatio) {
         extendParams.imageAspectRatio = chatConfig.imageAspectRatio;
       }

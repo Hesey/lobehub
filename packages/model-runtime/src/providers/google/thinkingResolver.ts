@@ -18,7 +18,7 @@ export type GoogleThinkingModelCategory = 'pro' | 'flash' | 'flashLite' | 'robot
 /**
  * Thinking level for Gemini 3.0+ models
  */
-export type GoogleThinkingLevel = 'minimal' | 'low' | 'medium' | 'high';
+export type GoogleThinkingLevel = 'minimal' | 'low' | 'medium' | 'high' | 'xhigh';
 
 /**
  * Options for resolving Google thinking configuration
@@ -276,6 +276,16 @@ export const resolveGoogleThinkingConfig = (
   options: GoogleThinkingResolverOptions = {},
 ): ResolvedGoogleThinkingConfig => {
   const { thinkingBudget, thinkingLevel } = options;
+
+  // Gemini 4 uses levels rather than the legacy thinking budget.
+  // Hydrogen defaults to high; Carbon and Argon default to medium.
+  if (['gemini-4-carbon', 'gemini-4-argon', 'gemini-4-hydrogen'].includes(model)) {
+    return {
+      includeThoughts: true,
+      thinkingBudget: undefined,
+      thinkingLevel: thinkingLevel ?? (model === 'gemini-4-hydrogen' ? 'high' : 'medium'),
+    };
+  }
 
   const isGemini3 = isGemini3Model(model);
   const hasExplicitBudget = thinkingBudget !== undefined && thinkingBudget !== null;

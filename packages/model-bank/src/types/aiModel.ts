@@ -248,6 +248,7 @@ export type ExtendParamsType =
   | 'thinkingLevel3'
   | 'thinkingLevel4'
   | 'thinkingLevel5'
+  | 'thinkingLevel6'
   | 'imageAspectRatio'
   | 'imageAspectRatio2'
   | 'imageResolution'

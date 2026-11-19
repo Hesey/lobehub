@@ -59,6 +59,7 @@ export interface LobeAgentChatConfig {
   thinkingLevel3?: 'low' | 'medium' | 'high';
   thinkingLevel4?: 'minimal' | 'high';
   thinkingLevel5?: 'minimal' | 'low' | 'medium' | 'high';
+  thinkingLevel6?: 'low' | 'medium' | 'high' | 'xhigh';
   /**
    * 禁用上下文缓存
    */
@@ -118,6 +119,7 @@ export const AgentChatConfigSchema = z.object({
   thinkingLevel3: z.enum(['low', 'medium', 'high']).optional(),
   thinkingLevel4: z.enum(['minimal', 'high']).optional(),
   thinkingLevel5: z.enum(['minimal', 'low', 'medium', 'high']).optional(),
+  thinkingLevel6: z.enum(['low', 'medium', 'high', 'xhigh']).optional(),
   urlContext: z.boolean().optional(),
   useModelBuiltinSearch: z.boolean().optional(),
 });
