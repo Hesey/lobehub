@@ -278,12 +278,14 @@ export const resolveGoogleThinkingConfig = (
   const { thinkingBudget, thinkingLevel } = options;
 
   // Gemini 4 uses levels rather than the legacy thinking budget.
-  // Hydrogen defaults to high; Carbon and Argon default to medium.
-  if (['gemini-4-carbon', 'gemini-4-argon', 'gemini-4-hydrogen'].includes(model)) {
+  // Hydrogen and Neon default to high; Carbon and Argon default to medium.
+  if (['gemini-4-carbon', 'gemini-4-argon', 'gemini-4-hydrogen', 'gemini-4-neon'].includes(model)) {
     return {
       includeThoughts: true,
       thinkingBudget: undefined,
-      thinkingLevel: thinkingLevel ?? (model === 'gemini-4-hydrogen' ? 'high' : 'medium'),
+      thinkingLevel:
+        thinkingLevel ??
+        (model === 'gemini-4-hydrogen' || model === 'gemini-4-neon' ? 'high' : 'medium'),
     };
   }
 

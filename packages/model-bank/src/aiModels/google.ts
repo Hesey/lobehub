@@ -116,6 +116,46 @@ const googleChatModels: AIChatModelCard[] = [
     },
     contextWindowTokens: 1_048_576,
     description:
+      'Gemini 4 Neon delivers frontier-level intelligence for complex software engineering, knowledge work, and science workflows, with a unified 1M-token context window and configurable reasoning up to xhigh.',
+    displayName: 'Gemini 4 Neon',
+    enabled: true,
+    family: 'gemini',
+    generation: 'gemini-4',
+    id: 'gemini-4-neon',
+    maxOutput: 65_536,
+    // Standard paid-tier prices; implicit caching only, with no cache-write charge.
+    // https://ai.google.dev/gemini-api/docs/pricing#gemini-4-neon
+    pricing: {
+      units: [
+        { name: 'textInput_cacheRead', rate: 0.15, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'textInput', rate: 3, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'imageInput', rate: 3, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'videoInput', rate: 3, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'audioInput', rate: 3, strategy: 'fixed', unit: 'millionTokens' },
+        { name: 'textOutput', rate: 15, strategy: 'fixed', unit: 'millionTokens' },
+      ],
+    },
+    // https://ai.google.dev/gemini-api/docs/whats-new-gemini-4-neon
+    settings: {
+      disabledParams: ['temperature', 'top_p'],
+      extendParams: ['thinkingLevel6', 'urlContext'],
+      searchImpl: 'params',
+      searchProvider: 'google',
+    },
+    type: 'chat',
+  },
+  {
+    abilities: {
+      audio: true,
+      functionCall: true,
+      reasoning: true,
+      search: true,
+      structuredOutput: true,
+      video: true,
+      vision: true,
+    },
+    contextWindowTokens: 1_048_576,
+    description:
       'Gemini 4 Hydrogen combines speed and efficiency for everyday coding and agentic workflows, with a unified 1M-token context window and configurable reasoning up to xhigh.',
     displayName: 'Gemini 4 Hydrogen',
     enabled: true,
